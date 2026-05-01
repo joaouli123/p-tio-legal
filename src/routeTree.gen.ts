@@ -9,12 +9,72 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VeiculosRouteImport } from './routes/veiculos'
+import { Route as UsuariosRouteImport } from './routes/usuarios'
+import { Route as UnidadesRouteImport } from './routes/unidades'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as ProcessosRouteImport } from './routes/processos'
+import { Route as PatioRouteImport } from './routes/patio'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LaudosRouteImport } from './routes/laudos'
+import { Route as DestruicaoRouteImport } from './routes/destruicao'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VeiculosRoute = VeiculosRouteImport.update({
+  id: '/veiculos',
+  path: '/veiculos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsuariosRoute = UsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnidadesRoute = UnidadesRouteImport.update({
+  id: '/unidades',
+  path: '/unidades',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProcessosRoute = ProcessosRouteImport.update({
+  id: '/processos',
+  path: '/processos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatioRoute = PatioRouteImport.update({
+  id: '/patio',
+  path: '/patio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaudosRoute = LaudosRouteImport.update({
+  id: '/laudos',
+  path: '/laudos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DestruicaoRoute = DestruicaoRouteImport.update({
+  id: '/destruicao',
+  path: '/destruicao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditoriaRoute = AuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,37 +85,184 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/destruicao': typeof DestruicaoRoute
+  '/laudos': typeof LaudosRoute
   '/login': typeof LoginRoute
+  '/patio': typeof PatioRoute
+  '/processos': typeof ProcessosRoute
+  '/relatorios': typeof RelatoriosRoute
+  '/unidades': typeof UnidadesRoute
+  '/usuarios': typeof UsuariosRoute
+  '/veiculos': typeof VeiculosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/destruicao': typeof DestruicaoRoute
+  '/laudos': typeof LaudosRoute
   '/login': typeof LoginRoute
+  '/patio': typeof PatioRoute
+  '/processos': typeof ProcessosRoute
+  '/relatorios': typeof RelatoriosRoute
+  '/unidades': typeof UnidadesRoute
+  '/usuarios': typeof UsuariosRoute
+  '/veiculos': typeof VeiculosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auditoria': typeof AuditoriaRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/destruicao': typeof DestruicaoRoute
+  '/laudos': typeof LaudosRoute
   '/login': typeof LoginRoute
+  '/patio': typeof PatioRoute
+  '/processos': typeof ProcessosRoute
+  '/relatorios': typeof RelatoriosRoute
+  '/unidades': typeof UnidadesRoute
+  '/usuarios': typeof UsuariosRoute
+  '/veiculos': typeof VeiculosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login'
+  fullPaths:
+    | '/'
+    | '/auditoria'
+    | '/configuracoes'
+    | '/destruicao'
+    | '/laudos'
+    | '/login'
+    | '/patio'
+    | '/processos'
+    | '/relatorios'
+    | '/unidades'
+    | '/usuarios'
+    | '/veiculos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login'
-  id: '__root__' | '/' | '/login'
+  to:
+    | '/'
+    | '/auditoria'
+    | '/configuracoes'
+    | '/destruicao'
+    | '/laudos'
+    | '/login'
+    | '/patio'
+    | '/processos'
+    | '/relatorios'
+    | '/unidades'
+    | '/usuarios'
+    | '/veiculos'
+  id:
+    | '__root__'
+    | '/'
+    | '/auditoria'
+    | '/configuracoes'
+    | '/destruicao'
+    | '/laudos'
+    | '/login'
+    | '/patio'
+    | '/processos'
+    | '/relatorios'
+    | '/unidades'
+    | '/usuarios'
+    | '/veiculos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuditoriaRoute: typeof AuditoriaRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
+  DestruicaoRoute: typeof DestruicaoRoute
+  LaudosRoute: typeof LaudosRoute
   LoginRoute: typeof LoginRoute
+  PatioRoute: typeof PatioRoute
+  ProcessosRoute: typeof ProcessosRoute
+  RelatoriosRoute: typeof RelatoriosRoute
+  UnidadesRoute: typeof UnidadesRoute
+  UsuariosRoute: typeof UsuariosRoute
+  VeiculosRoute: typeof VeiculosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/veiculos': {
+      id: '/veiculos'
+      path: '/veiculos'
+      fullPath: '/veiculos'
+      preLoaderRoute: typeof VeiculosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/usuarios': {
+      id: '/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof UsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unidades': {
+      id: '/unidades'
+      path: '/unidades'
+      fullPath: '/unidades'
+      preLoaderRoute: typeof UnidadesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/processos': {
+      id: '/processos'
+      path: '/processos'
+      fullPath: '/processos'
+      preLoaderRoute: typeof ProcessosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patio': {
+      id: '/patio'
+      path: '/patio'
+      fullPath: '/patio'
+      preLoaderRoute: typeof PatioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/laudos': {
+      id: '/laudos'
+      path: '/laudos'
+      fullPath: '/laudos'
+      preLoaderRoute: typeof LaudosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/destruicao': {
+      id: '/destruicao'
+      path: '/destruicao'
+      fullPath: '/destruicao'
+      preLoaderRoute: typeof DestruicaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditoria': {
+      id: '/auditoria'
+      path: '/auditoria'
+      fullPath: '/auditoria'
+      preLoaderRoute: typeof AuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,7 +277,17 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuditoriaRoute: AuditoriaRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
+  DestruicaoRoute: DestruicaoRoute,
+  LaudosRoute: LaudosRoute,
   LoginRoute: LoginRoute,
+  PatioRoute: PatioRoute,
+  ProcessosRoute: ProcessosRoute,
+  RelatoriosRoute: RelatoriosRoute,
+  UnidadesRoute: UnidadesRoute,
+  UsuariosRoute: UsuariosRoute,
+  VeiculosRoute: VeiculosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
