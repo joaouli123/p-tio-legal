@@ -1,6 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { PhoneFrame } from "@/components/PhoneFrame";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,71 +67,14 @@ function AppMobilePreview() {
     { id: "perfil", label: "Perfil", component: PerfilScreen },
   ];
 
-  const [active, setActive] = useState<ScreenId>("home");
+  const [active, setActive] = useState<ScreenId>("splash");
   const ActiveComp = screens.find((s) => s.id === active)?.component ?? HomeScreen;
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
-            >
-              <ArrowLeft className="h-4 w-4" /> Painel Web
-            </Link>
-            <span className="text-border">|</span>
-            <Logo size="sm" />
-          </div>
-          <Badge variant="outline" className="border-gold-subtle text-gold">
-            App Operacional • Preview
-          </Badge>
-        </div>
-      </header>
-
-      <div className="px-4 lg:px-8 py-8">
-        <div className="text-center mb-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gold mb-2">
-            Aplicativo do operador de pátio
-          </p>
-          <h1 className="text-3xl lg:text-4xl font-bold">Pátio Legal — Mobile</h1>
-          <p className="text-sm text-muted-foreground mt-2 max-w-2xl mx-auto">
-            Mockup das telas em React. Pronto para conversão em React Native (Expo) — toda a
-            navegação, fluxo de captura de mídia e UI já estão prototipados.
-          </p>
-        </div>
-
-        {/* Active phone preview */}
-        <div className="flex flex-col items-center mb-10">
-          <PhoneFrame label={screens.find((s) => s.id === active)?.label}>
-            <ActiveComp go={setActive} />
-          </PhoneFrame>
-        </div>
-
-        {/* Screen selector */}
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-lg font-bold mb-4 text-center">Todas as telas</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {screens.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setActive(s.id)}
-                className={`rounded-lg border p-3 text-left transition-all ${
-                  active === s.id
-                    ? "border-gold bg-gold/10 shadow-gold"
-                    : "border-border bg-card hover:border-gold/40"
-                }`}
-              >
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Tela
-                </p>
-                <p className="text-sm font-semibold">{s.label}</p>
-              </button>
-            ))}
-          </div>
-        </div>
+    <div className="min-h-screen w-full bg-background flex justify-center">
+      {/* Container responsivo: full width no mobile, max-w no desktop */}
+      <div className="w-full max-w-[480px] min-h-screen bg-background relative shadow-elegant overflow-hidden">
+        <ActiveComp go={setActive} />
       </div>
     </div>
   );
