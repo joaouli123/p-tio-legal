@@ -67,7 +67,7 @@ function AppMobilePreview() {
     { id: "perfil", label: "Perfil", component: PerfilScreen },
   ];
 
-  const [active, setActive] = useState<ScreenId>("splash");
+  const [active, setActive] = useState<ScreenId>("home");
   const ActiveComp = screens.find((s) => s.id === active)?.component ?? HomeScreen;
 
   return (
@@ -158,64 +158,116 @@ function LoginScreen({ go }: { go: (s: ScreenId) => void }) {
 
 function HomeScreen({ go }: { go: (s: ScreenId) => void }) {
   const actions = [
-    { id: "entrada" as ScreenId, label: "Nova entrada", icon: Plus, color: "bg-gold/15 text-gold border-gold/30" },
-    { id: "scan" as ScreenId, label: "Scanner QR", icon: ScanLine, color: "bg-info/15 text-info border-info/30" },
-    { id: "destruicao" as ScreenId, label: "Destruir", icon: Flame, color: "bg-destructive/15 text-destructive border-destructive/30" },
-    { id: "checklist" as ScreenId, label: "Checklist", icon: ClipboardList, color: "bg-success/15 text-success border-success/30" },
+    { id: "entrada" as ScreenId, label: "Nova entrada", sub: "Cadastrar veículo", icon: Plus, color: "from-gold/30 to-gold/5 border-gold/40 text-gold" },
+    { id: "scan" as ScreenId, label: "Scanner QR", sub: "Identificar bem", icon: ScanLine, color: "from-info/30 to-info/5 border-info/40 text-info" },
+    { id: "destruicao" as ScreenId, label: "Destruição", sub: "Iniciar processo", icon: Flame, color: "from-destructive/30 to-destructive/5 border-destructive/40 text-destructive" },
+    { id: "checklist" as ScreenId, label: "Vistoria", sub: "Checklist", icon: ClipboardList, color: "from-success/30 to-success/5 border-success/40 text-success" },
   ];
   const recent = [
-    { plate: "ABC1D23", model: "Honda CG 160", time: "há 12 min", status: "Entrada" },
-    { plate: "ZXC7G89", model: "Fiat Strada", time: "há 1h", status: "Destruição" },
-    { plate: "MNB4Y56", model: "Yamaha Factor", time: "hoje", status: "Liberado" },
+    { plate: "ABC1D23", model: "Honda CG 160 Titan", time: "há 12 min", status: "Entrada", tone: "success" },
+    { plate: "ZXC7G89", model: "Fiat Strada Adv", time: "há 1h", status: "Destruição", tone: "destructive" },
+    { plate: "MNB4Y56", model: "Yamaha Factor 125", time: "há 2h", status: "Liberado", tone: "info" },
+    { plate: "JKL9P22", model: "VW Gol G6", time: "hoje", status: "Vistoria", tone: "warning" },
+  ];
+  const week = [
+    { d: "S", v: 38 },
+    { d: "T", v: 52 },
+    { d: "Q", v: 41 },
+    { d: "Q", v: 67 },
+    { d: "S", v: 73 },
+    { d: "S", v: 28 },
+    { d: "D", v: 19 },
+  ];
+  const maxV = Math.max(...week.map((w) => w.v));
+  const alerts = [
+    { t: "3 veículos com prazo > 90 dias", icon: AlertTriangle, tone: "text-warning bg-warning/15 border-warning/30" },
+    { t: "Destruição agendada amanhã 09:00", icon: Flame, tone: "text-destructive bg-destructive/15 border-destructive/30" },
   ];
 
   return (
-    <div className="h-full flex flex-col bg-background pb-16">
-      {/* Header */}
-      <div className="bg-gradient-card px-5 pt-3 pb-6 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Bem-vindo</p>
-            <p className="font-bold">Marcos A.</p>
+    <div className="min-h-full flex flex-col bg-background pb-24">
+      {/* Hero header with gradient + bg pattern */}
+      <div className="relative bg-gradient-hero px-5 pt-4 pb-8 border-b border-gold/20 overflow-hidden">
+        <div className="absolute inset-0 opacity-30 pointer-events-none"
+          style={{ backgroundImage: "radial-gradient(circle at 90% 0%, oklch(0.80 0.14 85 / 30%) 0%, transparent 50%)" }} />
+        <div className="absolute -bottom-1 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+
+        <div className="relative flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => go("perfil")}
+              className="relative h-11 w-11 rounded-xl bg-gradient-gold flex items-center justify-center text-primary-foreground text-sm font-bold shadow-gold"
+            >
+              MA
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-background" />
+            </button>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gold">Operador</p>
+              <p className="font-bold leading-tight">Marcos Almeida</p>
+              <p className="text-[10px] text-muted-foreground">Matrícula OPR-2381</p>
+            </div>
           </div>
-          <button
-            onClick={() => go("perfil")}
-            className="h-9 w-9 rounded-full bg-gradient-gold flex items-center justify-center text-primary-foreground text-sm font-bold"
-          >
-            MA
+          <button className="relative h-10 w-10 rounded-xl bg-card border border-border flex items-center justify-center">
+            <Bell className="h-4 w-4" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-gold animate-pulse-gold" />
           </button>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <MapPin className="h-3 w-3 text-gold" /> Pátio Central — Maringá / PR
-          <span className="ml-auto flex items-center gap-1 text-success">
+
+        <div className="relative flex items-center gap-2 text-[11px]">
+          <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-card/60 border border-border">
+            <MapPin className="h-3 w-3 text-gold" /> Pátio Central — Maringá/PR
+          </span>
+          <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-success/15 border border-success/30 text-success">
             <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" /> Online
+          </span>
+          <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-card/60 border border-border text-muted-foreground ml-auto">
+            <Wifi className="h-3 w-3" /> 5G
           </span>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="px-5 -mt-3">
-        <div className="rounded-xl bg-gradient-card border border-gold/30 shadow-gold p-4 grid grid-cols-3 gap-2">
-          {[
-            { label: "Hoje", value: "12" },
-            { label: "Pátio", value: "847" },
-            { label: "Pendente", value: "5" },
-          ].map((k) => (
-            <div key={k.label} className="text-center">
-              <p className="text-xl font-bold text-gold">{k.value}</p>
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {k.label}
-              </p>
+      {/* KPI mega card */}
+      <div className="px-5 -mt-5 relative z-10">
+        <div className="rounded-2xl bg-gradient-card border border-gold/40 shadow-gold p-4 backdrop-blur-xl">
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Movimentação hoje</p>
+              <p className="text-3xl font-bold text-gradient-gold leading-none mt-1">12</p>
+              <p className="text-[10px] text-success mt-1">▲ 24% vs. ontem</p>
             </div>
-          ))}
+            {/* Mini sparkline */}
+            <svg viewBox="0 0 100 40" className="w-28 h-12">
+              <defs>
+                <linearGradient id="spark" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="oklch(0.80 0.14 85)" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="oklch(0.80 0.14 85)" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M0,30 L15,22 L30,28 L45,15 L60,18 L75,8 L100,12 L100,40 L0,40 Z" fill="url(#spark)" />
+              <path d="M0,30 L15,22 L30,28 L45,15 L60,18 L75,8 L100,12" fill="none" stroke="oklch(0.80 0.14 85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/60">
+            {[
+              { label: "No pátio", value: "847", tone: "text-foreground" },
+              { label: "Pendentes", value: "5", tone: "text-warning" },
+              { label: "Críticos", value: "2", tone: "text-destructive" },
+            ].map((k) => (
+              <div key={k.label} className="text-center">
+                <p className={`text-lg font-bold ${k.tone}`}>{k.value}</p>
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{k.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Quick actions */}
       <div className="px-5 mt-6">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Ações rápidas
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Ações rápidas</h3>
+          <span className="text-[10px] text-gold">4 disponíveis</span>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {actions.map((a) => {
             const Icon = a.icon;
@@ -223,43 +275,126 @@ function HomeScreen({ go }: { go: (s: ScreenId) => void }) {
               <button
                 key={a.id}
                 onClick={() => go(a.id)}
-                className={`rounded-xl border p-4 text-left ${a.color} active:scale-95 transition-transform`}
+                className={`relative overflow-hidden rounded-xl border bg-gradient-to-br ${a.color} p-4 text-left active:scale-[0.97] transition-all`}
               >
-                <Icon className="h-5 w-5 mb-2" />
-                <p className="text-sm font-semibold">{a.label}</p>
+                <div className="absolute -top-4 -right-4 h-16 w-16 rounded-full bg-current opacity-10" />
+                <Icon className="h-6 w-6 mb-2 relative" />
+                <p className="text-sm font-bold relative">{a.label}</p>
+                <p className="text-[10px] opacity-70 relative">{a.sub}</p>
               </button>
             );
           })}
         </div>
       </div>
 
+      {/* Weekly chart */}
+      <div className="px-5 mt-6">
+        <div className="rounded-xl bg-card border border-border p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-bold">Atividade semanal</h3>
+              <p className="text-[10px] text-muted-foreground">Entradas por dia</p>
+            </div>
+            <span className="text-[10px] px-2 py-1 rounded-full bg-gold/15 text-gold border border-gold/30">7d</span>
+          </div>
+          <div className="flex items-end justify-between gap-1.5 h-24">
+            {week.map((w, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                <div className="w-full flex-1 flex items-end">
+                  <div
+                    className={`w-full rounded-t-md ${i === 4 ? "bg-gradient-gold shadow-gold" : "bg-gold/25"}`}
+                    style={{ height: `${(w.v / maxV) * 100}%` }}
+                  />
+                </div>
+                <span className={`text-[10px] ${i === 4 ? "text-gold font-bold" : "text-muted-foreground"}`}>{w.d}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Pátio occupation */}
+      <div className="px-5 mt-6">
+        <div className="rounded-xl bg-gradient-card border border-border p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-bold">Ocupação do pátio</h3>
+              <p className="text-[10px] text-muted-foreground">847 / 1.200 vagas</p>
+            </div>
+            <span className="text-lg font-bold text-gold">70%</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted overflow-hidden mb-3">
+            <div className="h-full bg-gradient-gold rounded-full" style={{ width: "70%" }} />
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {Array.from({ length: 24 }).map((_, i) => {
+              const filled = i < 17;
+              const critical = i === 5 || i === 12;
+              return (
+                <div
+                  key={i}
+                  className={`aspect-square rounded ${
+                    critical ? "bg-destructive/60" : filled ? "bg-gold/70" : "bg-muted/40"
+                  }`}
+                />
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-3 mt-3 text-[9px] text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded bg-gold/70" /> Ocupado</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded bg-destructive/60" /> Crítico</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded bg-muted/40" /> Livre</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      <div className="px-5 mt-6 space-y-2">
+        {alerts.map((a, i) => {
+          const Icon = a.icon;
+          return (
+            <div key={i} className={`flex items-center gap-3 p-3 rounded-lg border ${a.tone}`}>
+              <Icon className="h-4 w-4 shrink-0" />
+              <p className="text-xs flex-1 font-medium">{a.t}</p>
+              <ChevronRight className="h-4 w-4 opacity-60" />
+            </div>
+          );
+        })}
+      </div>
+
       {/* Recent */}
       <div className="px-5 mt-6">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-          Movimentações recentes
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Movimentações recentes</h3>
+          <button className="text-[10px] text-gold">Ver todas</button>
+        </div>
         <div className="space-y-2">
-          {recent.map((r) => (
-            <button
-              key={r.plate}
-              onClick={() => go("vehicle")}
-              className="w-full rounded-lg bg-card border border-border p-3 flex items-center gap-3 hover:border-gold/40 transition"
-            >
-              <div className="h-9 w-9 rounded-md bg-gold/10 border border-gold/30 flex items-center justify-center">
-                <Car className="h-4 w-4 text-gold" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-mono font-bold">{r.plate}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {r.model} • {r.time}
-                </p>
-              </div>
-              <Badge variant="outline" className="text-[10px] border-border">
-                {r.status}
-              </Badge>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          ))}
+          {recent.map((r) => {
+            const toneMap: Record<string, string> = {
+              success: "bg-success/15 text-success border-success/30",
+              destructive: "bg-destructive/15 text-destructive border-destructive/30",
+              info: "bg-info/15 text-info border-info/30",
+              warning: "bg-warning/15 text-warning border-warning/30",
+            };
+            return (
+              <button
+                key={r.plate}
+                onClick={() => go("vehicle")}
+                className="w-full rounded-xl bg-card border border-border p-3 flex items-center gap-3 hover:border-gold/40 transition active:scale-[0.98]"
+              >
+                <div className="h-11 w-11 rounded-lg bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/30 flex items-center justify-center">
+                  <Car className="h-5 w-5 text-gold" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-mono font-bold tracking-wider">{r.plate}</p>
+                  <p className="text-[11px] text-muted-foreground">{r.model}</p>
+                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">{r.time}</p>
+                </div>
+                <Badge className={`text-[10px] border ${toneMap[r.tone]}`}>{r.status}</Badge>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            );
+          })}
         </div>
       </div>
 
