@@ -11,7 +11,6 @@ import {
   Building2,
   Settings,
   ShieldCheck,
-  Smartphone,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -24,7 +23,6 @@ const nav = [
   { to: "/destruicao", label: "Destruição", icon: Flame },
   { to: "/laudos", label: "Laudos", icon: FileCheck2 },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
-  { to: "/app", label: "App Operacional", icon: Smartphone },
 ];
 
 const admin = [
