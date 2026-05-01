@@ -20,7 +20,6 @@ import { Route as LaudosRouteImport } from './routes/laudos'
 import { Route as DestruicaoRouteImport } from './routes/destruicao'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VeiculosRoute = VeiculosRouteImport.update({
@@ -78,11 +77,6 @@ const AuditoriaRoute = AuditoriaRouteImport.update({
   path: '/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -91,7 +85,6 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/auditoria': typeof AuditoriaRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/destruicao': typeof DestruicaoRoute
@@ -106,7 +99,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/auditoria': typeof AuditoriaRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/destruicao': typeof DestruicaoRoute
@@ -122,7 +114,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
   '/auditoria': typeof AuditoriaRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/destruicao': typeof DestruicaoRoute
@@ -139,7 +130,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/app'
     | '/auditoria'
     | '/configuracoes'
     | '/destruicao'
@@ -154,7 +144,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app'
     | '/auditoria'
     | '/configuracoes'
     | '/destruicao'
@@ -169,7 +158,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/app'
     | '/auditoria'
     | '/configuracoes'
     | '/destruicao'
@@ -185,7 +173,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
   AuditoriaRoute: typeof AuditoriaRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DestruicaoRoute: typeof DestruicaoRoute
@@ -278,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -297,7 +277,6 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
   AuditoriaRoute: AuditoriaRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DestruicaoRoute: DestruicaoRoute,
