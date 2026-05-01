@@ -67,7 +67,7 @@ function AppMobilePreview() {
     { id: "perfil", label: "Perfil", component: PerfilScreen },
   ];
 
-  const [active, setActive] = useState<ScreenId>("splash");
+  const [active, setActive] = useState<ScreenId>("home");
   const ActiveComp = screens.find((s) => s.id === active)?.component ?? HomeScreen;
 
   return (
