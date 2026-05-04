@@ -28,7 +28,7 @@ export function Header() {
             <SheetContent side="left" className="p-0 w-72 bg-sidebar border-sidebar-border flex flex-col">
               <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
               <SheetDescription className="sr-only">Navegação principal do sistema</SheetDescription>
-              <SidebarContent onNavigate={() => setOpen(false)} />
+              <SidebarNav onNavigate={() => setOpen(false)} />
             </SheetContent>
           </Sheet>
 
