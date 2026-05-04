@@ -32,11 +32,11 @@ const admin = [
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
-export function Sidebar() {
+export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 bg-sidebar border-r border-sidebar-border h-screen sticky top-0">
+    <>
       <div className="p-5 border-b border-sidebar-border">
         <Logo size="md" />
       </div>
@@ -54,6 +54,7 @@ export function Sidebar() {
                 <li key={item.to}>
                   <Link
                     to={item.to}
+                    onClick={onNavigate}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                       active
@@ -82,6 +83,7 @@ export function Sidebar() {
                 <li key={item.to}>
                   <Link
                     to={item.to}
+                    onClick={onNavigate}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                       active
@@ -110,6 +112,14 @@ export function Sidebar() {
           </p>
         </div>
       </div>
+    </>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <aside className="hidden lg:flex flex-col w-64 bg-sidebar border-r border-sidebar-border h-screen sticky top-0">
+      <SidebarContent />
     </aside>
   );
 }
