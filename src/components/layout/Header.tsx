@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { useState } from "react";
 import { SidebarContent } from "./Sidebar";
 
@@ -27,10 +26,8 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72 bg-sidebar border-sidebar-border flex flex-col">
-              <VisuallyHidden>
-                <SheetTitle>Menu de navegação</SheetTitle>
-                <SheetDescription>Navegação principal do sistema</SheetDescription>
-              </VisuallyHidden>
+              <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
+              <SheetDescription className="sr-only">Navegação principal do sistema</SheetDescription>
               <SidebarContent onNavigate={() => setOpen(false)} />
             </SheetContent>
           </Sheet>
