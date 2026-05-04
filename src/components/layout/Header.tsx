@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useState } from "react";
-import { SidebarContent } from "./Sidebar";
+import { SidebarNav } from "./SidebarNav";
 
 export function Header() {
   const [open, setOpen] = useState(false);
