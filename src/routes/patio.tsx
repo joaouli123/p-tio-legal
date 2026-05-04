@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Warehouse, MapPin, Plus } from "lucide-react";
@@ -19,7 +19,7 @@ const setores = [
 
 function PatioPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Controle de pátio"
         title="Gestão de localização"
@@ -88,6 +88,6 @@ function PatioPage() {
           <span className="flex items-center gap-2"><span className="h-3 w-3 rounded bg-muted/40" /> Livre</span>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ const vehicles = [
 
 function VeiculosPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Cadastro de bens apreendidos"
         title="Veículos"
@@ -117,6 +117,6 @@ function VeiculosPage() {
           </div>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/configuracoes")({
 
 function ConfigPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Sistema"
         title="Configurações do tenant"
@@ -89,6 +89,6 @@ function ConfigPage() {
           </Button>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

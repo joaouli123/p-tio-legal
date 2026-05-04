@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
@@ -20,7 +20,7 @@ const monthly = [
 
 function RelatoriosPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="BI e exportações"
         title="Relatórios gerenciais"
@@ -110,6 +110,6 @@ function RelatoriosPage() {
           </ul>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

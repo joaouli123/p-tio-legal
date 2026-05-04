@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { ShieldCheck, User, Edit3, Trash2, Plus, Eye } from "lucide-react";
 
@@ -19,7 +19,7 @@ const logs = [
 
 function AuditoriaPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Trilha de auditoria"
         title="Logs do sistema"
@@ -54,6 +54,6 @@ function AuditoriaPage() {
           })}
         </ul>
       </div>
-    </AppLayout>
+    </>
   );
 }

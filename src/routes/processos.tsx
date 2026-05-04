@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ const processos = [
 
 function ProcessosPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Acompanhamento processual"
         title="Processos vinculados"
@@ -91,6 +91,6 @@ function ProcessosPage() {
           </ol>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }
