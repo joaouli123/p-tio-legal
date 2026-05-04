@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ const laudos = [
 
 function LaudosPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Documentos com validade jurídica"
         title="Laudos periciais"
@@ -101,6 +101,6 @@ function LaudosPage() {
           </Button>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

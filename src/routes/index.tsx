@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -80,7 +80,7 @@ const recentVehicles = [
 
 function Dashboard() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Visão geral do sistema"
         title="Dashboard operacional"
@@ -268,6 +268,6 @@ function Dashboard() {
           </ul>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

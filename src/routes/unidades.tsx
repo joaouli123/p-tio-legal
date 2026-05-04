@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { Building2, MapPin, Phone, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ const unidades = [
 
 function UnidadesPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Multi-tenant"
         title="Unidades e órgãos"
@@ -60,6 +60,6 @@ function UnidadesPage() {
           </div>
         ))}
       </div>
-    </AppLayout>
+    </>
   );
 }

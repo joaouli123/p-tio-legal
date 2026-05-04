@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Camera, Video, Check, AlertTriangle, Flame, FileCheck2, QrCode, Hash } from "lucide-react";
@@ -18,7 +18,7 @@ function DestruicaoPage() {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Motor de destruição"
         title="Destruição controlada"
@@ -138,6 +138,6 @@ function DestruicaoPage() {
           </div>
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
+
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,7 +20,7 @@ const users = [
 
 function UsuariosPage() {
   return (
-    <AppLayout>
+    <>
       <PageHeader
         eyebrow="Controle de acesso (RBAC)"
         title="Usuários e permissões"
@@ -74,6 +74,6 @@ function UsuariosPage() {
           })}
         </div>
       </div>
-    </AppLayout>
+    </>
   );
 }
