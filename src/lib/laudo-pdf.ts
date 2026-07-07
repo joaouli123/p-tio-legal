@@ -13,6 +13,7 @@ interface LaudoPdfData {
   fields?: Record<string, string>;
   fotos?: LaudoFoto[];
   identificationRows?: Array<[string, string]>;
+  laudoNarrativo?: boolean;
 }
 
 function getField(doc: LaudoPdfData, key: string, fallback = "—") {
@@ -105,8 +106,176 @@ export async function createLaudoPdfBlob(doc: LaudoPdfData) {
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(20);
-  pdf.text(doc.title, pageWidth / 2, y, { align: "center" });
-  y += 34;
+  if (doc.laudoNarrativo) {
+    const titleLines = pdf.splitTextToSize(doc.title, contentWidth);
+    pdf.text(titleLines, pageWidth / 2, y, { align: "center" });
+    y += titleLines.length * 24 + 12;
+  } else {
+    pdf.text(doc.title, pageWidth / 2, y, { align: "center" });
+    y += 34;
+  }
+
+  if (doc.laudoNarrativo) {
+    const drawSectionTitle = (text: string) => {
+      ensureSpace(30);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.text(text, margin, y);
+      y += 18;
+    };
+    const drawBullet = (text: string) => {
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      const bulletIndent = 16;
+      const lines = pdf.splitTextToSize(text, contentWidth - bulletIndent);
+      ensureSpace(lines.length * 15 + 4);
+      pdf.text("•", margin, y);
+      pdf.text(lines, margin + bulletIndent, y);
+      y += lines.length * 15 + 4;
+    };
+
+    const qtdFem = getField(doc, "qtdFem");
+    const qtdMasc = getField(doc, "qtdMasc");
+    const delegacia = getField(doc, "delegacia", "Delegacia requisitante");
+
+    pdf.setTextColor(0, 0, 0);
+    drawLabelValue("LAUDO Nº:", getField(doc, "laudoNumber"));
+    y += 22;
+    drawLabelValue("DATA/HORA:", getField(doc, "destructionDate"));
+    y += 22;
+    // REQUISITADA wraps across lines (it carries the full CNPJ + address).
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.text("REQUISITADA:", margin, y);
+    const reqOffset = pdf.getTextWidth("REQUISITADA:") + 4;
+    pdf.setFont("helvetica", "normal");
+    const reqText = "MARINGÁ SAT – PRESTADORA DE SERVIÇOS EM VEÍCULOS LTDA. CNPJ: 12.160.871/0001-51 — ENDEREÇO: Avenida Paranavaí, 1489 – Parque das Laranjeiras – Maringá/PR";
+    const reqLines = pdf.splitTextToSize(reqText, contentWidth - reqOffset);
+    pdf.text(reqLines, margin + reqOffset, y);
+    y += reqLines.length * 15 + 18;
+
+    drawSectionTitle("I. OBJETIVO");
+    drawParagraph(`Em atendimento à solicitação encaminhada pela ${delegacia}, a empresa MARINGÁ SAT foi responsável pela destruição física de ${qtdFem} máquinas eletrônicas do tipo caça-níquel, apreendidas e destinadas à inutilização definitiva.`);
+
+    drawSectionTitle("II. CONSIDERAÇÕES INICIAIS");
+    drawParagraph("A destruição foi realizada nas dependências da MARINGÁ SAT, utilizando equipamento industrial triturador de sucata, garantindo a completa descaracterização e inutilização dos equipamentos.");
+
+    drawSectionTitle("III. DA DESTRUIÇÃO");
+    drawParagraph(`Foram submetidas à destruição total ${qtdFem} máquinas caça-níqueis.`);
+    drawParagraph("O procedimento consistiu em:");
+    drawBullet("Recebimento e conferência dos equipamentos;");
+    drawBullet("Inserção das máquinas no triturador industrial de sucata;");
+    drawBullet("Trituração integral das estruturas metálicas, componentes eletrônicos, gabinetes e acessórios;");
+    drawBullet("Descaracterização irreversível dos equipamentos;");
+    drawBullet("Separação dos resíduos recicláveis;");
+    drawBullet("Destinação ambientalmente adequada dos materiais resultantes.");
+    y += 6;
+    drawParagraph("As fotografias registram os equipamentos antes da destruição, durante o processo de trituração e após sua completa transformação em sucata fragmentada.");
+
+    ensureSpace(140);
+    drawSectionTitle("IV. REGISTRO FOTOGRÁFICO E DOCUMENTAL");
+    drawParagraph("O procedimento foi integralmente registrado por meio fotográfico, comprovando a destruição total dos equipamentos.");
+
+    const hashValue = getField(doc, "hashSha256", "");
+    if (qrData) {
+      ensureSpace(100);
+      pdf.addImage(qrData, inferImageFormat(qrData), margin, y, 74, 74);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      pdf.text("Verificação digital do laudo:", margin + 90, y + 12);
+      pdf.setFont("helvetica", "normal");
+      const verificationLines = pdf.splitTextToSize(getField(doc, "verificationUrl"), contentWidth - 100);
+      pdf.text(verificationLines, margin + 90, y + 30);
+      let hashBottom = y + 30 + verificationLines.length * 12;
+      if (hashValue) {
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(9);
+        pdf.text("Hash SHA-256:", margin + 90, hashBottom + 6);
+        pdf.setFont("courier", "normal");
+        pdf.setFontSize(7);
+        const hashLines = pdf.splitTextToSize(hashValue, contentWidth - 100);
+        pdf.text(hashLines, margin + 90, hashBottom + 18);
+        hashBottom += 18 + hashLines.length * 9;
+      }
+      y = Math.max(y + 90, hashBottom + 8);
+    } else {
+      drawParagraph(`Verificação digital do laudo: ${getField(doc, "verificationUrl")}`);
+      if (hashValue) {
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(9);
+        pdf.text("Hash SHA-256:", margin, y);
+        pdf.setFont("courier", "normal");
+        pdf.setFontSize(7);
+        const hashLines = pdf.splitTextToSize(hashValue, contentWidth);
+        pdf.text(hashLines, margin, y + 12);
+        y += 12 + hashLines.length * 9 + 6;
+      }
+    }
+
+    ensureSpace(130);
+    drawSectionTitle("V. CONCLUSÃO");
+    drawParagraph(`Certifico que os ${qtdMasc} equipamentos caça-níqueis foram completamente destruídos mediante processo de trituração industrial, tornando impossível sua recuperação, reutilização ou funcionamento.`);
+    drawParagraph("Todo o procedimento ocorreu em ambiente controlado, seguindo os protocolos de segurança operacional e destinação ambientalmente adequada dos resíduos.");
+
+    const fotos = doc.fotos ?? [];
+    if (fotos.length > 0) {
+      ensureSpace(60);
+      drawSectionTitle("REGISTRO FOTOGRÁFICO");
+
+      const perRow = 3;
+      const gap = 16;
+      const captionHeight = 16;
+      const photoWidth = (contentWidth - gap * (perRow - 1)) / perRow;
+      const photoHeight = photoWidth * 0.66;
+      const rowHeight = photoHeight + captionHeight;
+
+      fotos.forEach((foto, index) => {
+        const col = index % perRow;
+        if (col === 0) {
+          ensureSpace(rowHeight + 8);
+        }
+        const x = margin + col * (photoWidth + gap);
+        const image = photoData[index];
+
+        if (image) {
+          pdf.addImage(image, inferImageFormat(image), x, y, photoWidth, photoHeight);
+          pdf.setDrawColor(170, 170, 170);
+          pdf.rect(x, y, photoWidth, photoHeight);
+        } else {
+          pdf.setDrawColor(170, 170, 170);
+          pdf.rect(x, y, photoWidth, photoHeight);
+          pdf.setFont("helvetica", "italic");
+          pdf.setFontSize(9);
+          pdf.text("Imagem indisponível", x + (photoWidth / 2), y + (photoHeight / 2), { align: "center" });
+        }
+
+        pdf.setFont("helvetica", "italic");
+        pdf.setFontSize(9);
+        const caption = pdf.splitTextToSize(foto.label, photoWidth)[0] ?? foto.label;
+        pdf.text(caption, x + (photoWidth / 2), y + photoHeight + 11, { align: "center" });
+
+        if (col === perRow - 1 || index === fotos.length - 1) {
+          y += rowHeight + 8;
+        }
+      });
+
+      y += 12;
+    }
+
+    ensureSpace(140);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.text(`Maringá/PR, ${getField(doc, "destructionDateLong")}.`, margin, y + 8);
+    y += 74;
+    pdf.setDrawColor(0, 0, 0);
+    pdf.line(pageWidth - 250, y, pageWidth - 40, y);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Jardel F. Pinto", pageWidth - 145, y + 18, { align: "center" });
+    pdf.setFont("helvetica", "normal");
+    pdf.text("Representante Técnico Nomeado", pageWidth - 145, y + 34, { align: "center" });
+
+    return pdf.output("blob");
+  }
 
   pdf.setTextColor(0, 0, 0);
   drawLabelValue("LAUDO Nº:", getField(doc, "laudoNumber"));

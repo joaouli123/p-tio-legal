@@ -25,6 +25,7 @@ interface LaudoDocData {
   fields?: Record<string, string>;
   fotos?: LaudoFoto[];
   identificationRows?: Array<[string, string]>;
+  laudoNarrativo?: boolean;
 }
 
 const BLUE = "1A3560";
@@ -69,6 +70,15 @@ function textParagraph(text: string, options?: ConstructorParameters<typeof Para
     spacing: { after: 110 },
     alignment: AlignmentType.JUSTIFIED,
     ...options,
+  });
+}
+
+function bulletParagraph(text: string) {
+  return new Paragraph({
+    children: [new TextRun({ text, size: 22 })],
+    bullet: { level: 0 },
+    spacing: { after: 60 },
+    alignment: AlignmentType.JUSTIFIED,
   });
 }
 
@@ -144,6 +154,145 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
     spacing: { after: 260 },
     children: [new TextRun({ text: doc.title, bold: true, size: 40 })],
   }));
+
+  const buildQrBlock = (): Array<Paragraph | Table> => {
+    if (qrData) {
+      return [new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: NONE_BORDERS,
+        rows: [
+          new TableRow({
+            children: [
+              borderlessCell([
+                new Paragraph({
+                  alignment: AlignmentType.LEFT,
+                  children: [new ImageRun({ data: qrData, transformation: { width: 72, height: 72 } })],
+                }),
+              ]),
+              borderlessCell([
+                new Paragraph({ children: [new TextRun({ text: "Verificação digital do laudo:", bold: true, size: 20 })] }),
+                new Paragraph({ children: [new TextRun({ text: getField(doc, "verificationUrl"), size: 20 })] }),
+                ...(getField(doc, "hashSha256", "") ? [
+                  new Paragraph({ children: [new TextRun({ text: "Hash SHA-256:", bold: true, size: 18 })] }),
+                  new Paragraph({ children: [new TextRun({ text: getField(doc, "hashSha256"), font: "Courier New", size: 14 })] }),
+                ] : []),
+              ]),
+            ],
+          }),
+        ],
+      })];
+    }
+    const fallback: Array<Paragraph | Table> = [textParagraph(`Verificação digital do laudo: ${getField(doc, "verificationUrl")}`)];
+    if (getField(doc, "hashSha256", "")) {
+      fallback.push(new Paragraph({ children: [new TextRun({ text: `Hash SHA-256: ${getField(doc, "hashSha256")}`, font: "Courier New", size: 16 })] }));
+    }
+    return fallback;
+  };
+
+  const buildPhotosBlock = (title: string): Array<Paragraph | Table> => {
+    if ((doc.fotos ?? []).length === 0) return [];
+    return [
+      sectionTitle(title),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: NONE_BORDERS,
+        rows: [
+          new TableRow({
+            children: (doc.fotos ?? []).map((foto, index) => {
+              const image = photoData[index];
+              const photoChildren: Paragraph[] = [];
+              if (image) {
+                photoChildren.push(new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  children: [new ImageRun({ data: image, transformation: { width: 220, height: 150 } })],
+                }));
+              } else {
+                photoChildren.push(new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  children: [new TextRun({ text: "Imagem indisponível", italics: true, size: 20 })],
+                }));
+              }
+              photoChildren.push(new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 60 },
+                children: [new TextRun({ text: foto.label, italics: true, size: 20 })],
+              }));
+              return borderlessCell(photoChildren);
+            }),
+          }),
+        ],
+      }),
+    ];
+  };
+
+  const buildSignatureBlock = (): Paragraph[] => [
+    new Paragraph({
+      spacing: { before: 220, after: 520 },
+      children: [new TextRun({ text: `Maringá/PR, ${getField(doc, "destructionDateLong")}.`, size: 24 })],
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      border: { top: { color: "000000", style: BorderStyle.SINGLE, size: 4 } },
+      children: [
+        new TextRun({ text: "Jardel F. Pinto", bold: true, size: 24 }),
+        new TextRun({ text: "Representante Técnico Nomeado", break: 1, size: 24 }),
+      ],
+    }),
+  ];
+
+  if (doc.laudoNarrativo) {
+    const qtdFem = getField(doc, "qtdFem");
+    const qtdMasc = getField(doc, "qtdMasc");
+    const delegacia = getField(doc, "delegacia", "Delegacia requisitante");
+
+    children.push(labelValueParagraph("LAUDO Nº: ", getField(doc, "laudoNumber")));
+    children.push(labelValueParagraph("DATA/HORA: ", getField(doc, "destructionDate")));
+    children.push(new Paragraph({
+      spacing: { after: 150 },
+      children: [
+        new TextRun({ text: "REQUISITADA: ", bold: true, size: 24 }),
+        new TextRun({ text: "MARINGÁ SAT – PRESTADORA DE SERVIÇOS EM VEÍCULOS LTDA. CNPJ: 12.160.871/0001-51 — ENDEREÇO: Avenida Paranavaí, 1489 – Parque das Laranjeiras – Maringá/PR", size: 24 }),
+      ],
+    }));
+
+    children.push(sectionTitle("I. OBJETIVO"));
+    children.push(textParagraph(`Em atendimento à solicitação encaminhada pela ${delegacia}, a empresa MARINGÁ SAT foi responsável pela destruição física de ${qtdFem} máquinas eletrônicas do tipo caça-níquel, apreendidas e destinadas à inutilização definitiva.`));
+
+    children.push(sectionTitle("II. CONSIDERAÇÕES INICIAIS"));
+    children.push(textParagraph("A destruição foi realizada nas dependências da MARINGÁ SAT, utilizando equipamento industrial triturador de sucata, garantindo a completa descaracterização e inutilização dos equipamentos."));
+
+    children.push(sectionTitle("III. DA DESTRUIÇÃO"));
+    children.push(textParagraph(`Foram submetidas à destruição total ${qtdFem} máquinas caça-níqueis.`));
+    children.push(textParagraph("O procedimento consistiu em:"));
+    children.push(bulletParagraph("Recebimento e conferência dos equipamentos;"));
+    children.push(bulletParagraph("Inserção das máquinas no triturador industrial de sucata;"));
+    children.push(bulletParagraph("Trituração integral das estruturas metálicas, componentes eletrônicos, gabinetes e acessórios;"));
+    children.push(bulletParagraph("Descaracterização irreversível dos equipamentos;"));
+    children.push(bulletParagraph("Separação dos resíduos recicláveis;"));
+    children.push(bulletParagraph("Destinação ambientalmente adequada dos materiais resultantes."));
+    children.push(textParagraph("As fotografias registram os equipamentos antes da destruição, durante o processo de trituração e após sua completa transformação em sucata fragmentada."));
+
+    children.push(sectionTitle("IV. REGISTRO FOTOGRÁFICO E DOCUMENTAL"));
+    children.push(textParagraph("O procedimento foi integralmente registrado por meio fotográfico, comprovando a destruição total dos equipamentos."));
+    children.push(...buildQrBlock());
+
+    children.push(sectionTitle("V. CONCLUSÃO"));
+    children.push(textParagraph(`Certifico que os ${qtdMasc} equipamentos caça-níqueis foram completamente destruídos mediante processo de trituração industrial, tornando impossível sua recuperação, reutilização ou funcionamento.`));
+    children.push(textParagraph("Todo o procedimento ocorreu em ambiente controlado, seguindo os protocolos de segurança operacional e destinação ambientalmente adequada dos resíduos."));
+
+    children.push(...buildPhotosBlock("REGISTRO FOTOGRÁFICO"));
+    children.push(...buildSignatureBlock());
+
+    const narrativoDoc = new Document({
+      sections: [
+        {
+          properties: { page: { margin: { top: 900, right: 900, bottom: 900, left: 900 } } },
+          children,
+        },
+      ],
+    });
+    return Packer.toBlob(narrativoDoc);
+  }
 
   children.push(labelValueParagraph("LAUDO Nº: ", getField(doc, "laudoNumber")));
   children.push(labelValueParagraph("DATA/HORA: ", getField(doc, "destructionDate")));

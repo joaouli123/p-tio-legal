@@ -31,6 +31,11 @@ export interface ExportableDocument {
   sections: DocumentSection[];
   footer: string[];
   kind?: "default" | "laudo" | "report";
+  // When true (only for the caça-níquel laudo), the laudo renderers use a
+  // dedicated narrative template instead of the vehicle/identification-table
+  // layout. All shared chrome (letterhead, REQUISITADA, QR/hash, photos,
+  // signature) is preserved.
+  laudoNarrativo?: boolean;
   fields?: Record<string, string>;
   fotos?: LaudoFoto[];
   // Optional identification rows for the laudo. When present, the laudo
@@ -299,6 +304,40 @@ function formatHashForDisplay(hash?: string) {
   return hash.toUpperCase();
 }
 
+// pt-BR cardinal numbers by writing/spelling (extenso) for 1–29, with gender.
+// Feminine is used for "máquinas" and masculine for "equipamentos".
+const EXTENSO_FEMININO: Record<number, string> = {
+  1: "uma", 2: "duas", 3: "três", 4: "quatro", 5: "cinco", 6: "seis",
+  7: "sete", 8: "oito", 9: "nove", 10: "dez", 11: "onze", 12: "doze",
+  13: "treze", 14: "quatorze", 15: "quinze", 16: "dezesseis", 17: "dezessete",
+  18: "dezoito", 19: "dezenove", 20: "vinte", 21: "vinte e uma",
+  22: "vinte e duas", 23: "vinte e três", 24: "vinte e quatro",
+  25: "vinte e cinco", 26: "vinte e seis", 27: "vinte e sete",
+  28: "vinte e oito", 29: "vinte e nove",
+};
+const EXTENSO_MASCULINO: Record<number, string> = {
+  1: "um", 2: "dois", 3: "três", 4: "quatro", 5: "cinco", 6: "seis",
+  7: "sete", 8: "oito", 9: "nove", 10: "dez", 11: "onze", 12: "doze",
+  13: "treze", 14: "quatorze", 15: "quinze", 16: "dezesseis", 17: "dezessete",
+  18: "dezoito", 19: "dezenove", 20: "vinte", 21: "vinte e um",
+  22: "vinte e dois", 23: "vinte e três", 24: "vinte e quatro",
+  25: "vinte e cinco", 26: "vinte e seis", 27: "vinte e sete",
+  28: "vinte e oito", 29: "vinte e nove",
+};
+
+/**
+ * Formats a quantity as a 2-digit number followed by its pt-BR spelling in
+ * parentheses — e.g. 1 → "01 (uma)", 2 → "02 (duas)". For values above 29 only
+ * the 2-digit number plus "(unidades)" is returned.
+ */
+function formatQuantidadeExtenso(quantidade: number, genero: "feminino" | "masculino") {
+  const n = Math.max(0, Math.trunc(quantidade || 0));
+  const twoDigits = String(n).padStart(2, "0");
+  const table = genero === "feminino" ? EXTENSO_FEMININO : EXTENSO_MASCULINO;
+  const extenso = table[n];
+  return extenso ? `${twoDigits} (${extenso})` : `${twoDigits} (unidades)`;
+}
+
 export function buildLaudoDocument({
   veiculo,
   laudoNumber,
@@ -416,6 +455,92 @@ export function buildLaudoObjetoDocument({
   const verificationUrl = buildVerificationUrl(laudoNumber);
   const tipoBem = formatObjetoTipoLabel(objeto.tipo);
   const quantidadeLabel = `${objeto.quantidade} ${objeto.unidade}`;
+  const isCacaNiquel = objeto.tipo === "caca_niquel";
+
+  // Dedicated narrative laudo for caça-níquel equipment: a bespoke title plus
+  // narrative fields the renderers use instead of the vehicle-style table.
+  if (isCacaNiquel) {
+    const quantidade = objeto.quantidade || 1;
+    const delegacia = objeto.delegacia_nome?.trim() || "Delegacia requisitante";
+    const qtdFem = formatQuantidadeExtenso(quantidade, "feminino");
+    const qtdMasc = formatQuantidadeExtenso(quantidade, "masculino");
+    const docTitle = "LAUDO DE DESTRUIÇÃO DE EQUIPAMENTOS (CAÇA-NÍQUEIS)";
+
+    return {
+      title: docTitle,
+      subtitle: `${COMPANY_FULL_NAME} • Laudo oficial de destruição`,
+      filenameBase: sanitizeFilename(`laudo-${laudoNumber}-caca-niquel`),
+      kind: "laudo",
+      laudoNarrativo: true,
+      fields: {
+        docTitle,
+        laudoNumber,
+        delegacia,
+        qtdFem,
+        qtdMasc,
+        metodo,
+        destructionDate: formatDateTime(destructionMoment),
+        destructionDateLong: formatLongDate(destructionMoment),
+        qrCodeUrl: buildQrCodeImageUrl(verificationUrl),
+        verificationUrl,
+        ...(hash ? { hashSha256: formatHashForDisplay(hash) } : {}),
+      },
+      meta: [
+        { label: "Nº do laudo", value: laudoNumber },
+        { label: "Delegacia requisitante", value: delegacia },
+        { label: "Equipamento", value: "Máquinas caça-níquel" },
+        { label: "Quantidade", value: quantidadeLabel },
+        { label: "Método de destruição", value: "Trituração industrial" },
+        { label: "Data da destruição", value: formatDateTime(destructionMoment) },
+        ...(hash ? [{ label: "Hash SHA-256", value: formatHashForDisplay(hash) }] : []),
+      ],
+      // These sections drive the on-screen React preview (DocumentPreview). The
+      // exported HTML/PDF/DOCX renderers carry their own narrative text keyed off
+      // the fields above, so this mirrors that narrative for the preview.
+      sections: [
+        {
+          title: "I. OBJETIVO",
+          paragraphs: [
+            `Em atendimento à solicitação encaminhada pela ${delegacia}, a empresa MARINGÁ SAT foi responsável pela destruição física de ${qtdFem} máquinas eletrônicas do tipo caça-níquel, apreendidas e destinadas à inutilização definitiva.`,
+          ],
+        },
+        {
+          title: "II. CONSIDERAÇÕES INICIAIS",
+          paragraphs: [
+            "A destruição foi realizada nas dependências da MARINGÁ SAT, utilizando equipamento industrial triturador de sucata, garantindo a completa descaracterização e inutilização dos equipamentos.",
+          ],
+        },
+        {
+          title: "III. DA DESTRUIÇÃO",
+          paragraphs: [
+            `Foram submetidas à destruição total ${qtdFem} máquinas caça-níqueis.`,
+            "O procedimento consistiu em: recebimento e conferência dos equipamentos; inserção das máquinas no triturador industrial de sucata; trituração integral das estruturas metálicas, componentes eletrônicos, gabinetes e acessórios; descaracterização irreversível dos equipamentos; separação dos resíduos recicláveis; e destinação ambientalmente adequada dos materiais resultantes.",
+            "As fotografias registram os equipamentos antes da destruição, durante o processo de trituração e após sua completa transformação em sucata fragmentada.",
+          ],
+        },
+        {
+          title: "IV. REGISTRO FOTOGRÁFICO E DOCUMENTAL",
+          paragraphs: [
+            "O procedimento foi integralmente registrado por meio fotográfico, comprovando a destruição total dos equipamentos.",
+          ],
+        },
+        {
+          title: "V. CONCLUSÃO",
+          paragraphs: [
+            `Certifico que os ${qtdMasc} equipamentos caça-níqueis foram completamente destruídos mediante processo de trituração industrial, tornando impossível sua recuperação, reutilização ou funcionamento.`,
+            "Todo o procedimento ocorreu em ambiente controlado, seguindo os protocolos de segurança operacional e destinação ambientalmente adequada dos resíduos.",
+          ],
+        },
+      ],
+      footer: [
+        `Maringá/PR, ${formatLongDate(destructionMoment)}.`,
+        "Jardel F. Pinto",
+        "Representante Técnico Nomeado",
+      ],
+      fotos: fotos ?? [],
+    };
+  }
+
   const docTitle = "LAUDO DE DESTRUIÇÃO DE OBJETO APREENDIDO";
 
   const identificationRows: Array<[string, string]> = [
@@ -868,7 +993,135 @@ function buildDefaultMarkup(doc: ExportableDocument) {
   `;
 }
 
+function buildLaudoNarrativoMarkup(doc: ExportableDocument) {
+  const logoSrc = getLaudoLogoUrl();
+  const docTitle = getField(doc, "docTitle", "LAUDO DE DESTRUIÇÃO DE EQUIPAMENTOS (CAÇA-NÍQUEIS)");
+  const qtdFem = getField(doc, "qtdFem");
+  const qtdMasc = getField(doc, "qtdMasc");
+  const delegacia = getField(doc, "delegacia", "Delegacia requisitante");
+  return `
+    <style>
+      body { margin: 0; padding: 0; background: #ffffff; }
+      .laudo-doc { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #000000; max-width: 820px; margin: 0 auto; padding: 36px 48px; background: #ffffff; }
+      .letterhead { display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+      .letterhead img { width: 100%; max-width: 760px; height: auto; object-fit: contain; display: block; }
+      .doc-title { font-size: 22pt; font-weight: bold; text-align: center; text-transform: uppercase; color: #000000; margin: 12px 0 24px; }
+      .header-fields { margin-bottom: 18px; line-height: 1.75; }
+      .header-row { margin-bottom: 6px; }
+      .field-label { font-weight: bold; font-size: 11pt; }
+      .field-value { font-size: 11pt; }
+      .requisitada { margin: 6px 0 0; font-size: 11pt; }
+      .section { margin-top: 16px; }
+      .section-title { font-weight: bold; font-size: 11pt; margin-bottom: 8px; }
+      .section p { font-size: 11pt; line-height: 1.65; text-align: justify; margin: 0 0 8px; }
+      .section ul { margin: 0 0 8px; padding-left: 22px; }
+      .section li { font-size: 11pt; line-height: 1.65; margin: 0 0 4px; }
+      .qr-row { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+      .qr-row img { width: 80px; height: 80px; flex-shrink: 0; }
+      .qr-text { font-size: 10pt; line-height: 1.5; word-break: break-all; }
+      .signature-area { margin-top: 40px; }
+      .city-date { font-size: 11pt; margin-bottom: 50px; }
+      .signature-block { display: flex; justify-content: flex-end; }
+      .signature-line { text-align: center; width: 300px; border-top: 1px solid #000000; padding-top: 6px; font-size: 11pt; }
+      .signature-name { font-weight: bold; }
+      .photos-section { margin-top: 20px; }
+      .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+      .photo-item { text-align: center; }
+      .photo-item img { width: 100%; max-height: 200px; object-fit: cover; border: 1px solid #aaaaaa; border-radius: 4px; }
+      .photo-caption { font-size: 9.5pt; color: #444444; margin-top: 4px; font-style: italic; }
+      @media print { body { background: #fff; } .laudo-doc { padding: 0; } }
+    </style>
+    <div class="laudo-doc">
+      <div class="letterhead">
+        <img src="${logoSrc}" alt="Pátio Legal Maringá SAT" />
+      </div>
+
+      <div class="doc-title">${escapeHtml(docTitle)}</div>
+
+      <div class="header-fields">
+        <div class="header-row">
+          <span class="field-label">LAUDO Nº: </span><span class="field-value">${escapeHtml(getField(doc, "laudoNumber"))}</span>
+        </div>
+        <div class="header-row">
+          <span class="field-label">DATA/HORA: </span><span class="field-value">${escapeHtml(getField(doc, "destructionDate"))}</span>
+        </div>
+        <div class="requisitada">
+          <span class="field-label">REQUISITADA: </span><span class="field-value">MARINGÁ SAT – PRESTADORA DE SERVIÇOS EM VEÍCULOS LTDA. CNPJ: 12.160.871/0001-51 — ENDEREÇO: Avenida Paranavaí, 1489 – Parque das Laranjeiras – Maringá/PR</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">I. OBJETIVO</div>
+        <p>Em atendimento à solicitação encaminhada pela ${escapeHtml(delegacia)}, a empresa MARINGÁ SAT foi responsável pela destruição física de ${escapeHtml(qtdFem)} máquinas eletrônicas do tipo caça-níquel, apreendidas e destinadas à inutilização definitiva.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">II. CONSIDERAÇÕES INICIAIS</div>
+        <p>A destruição foi realizada nas dependências da MARINGÁ SAT, utilizando equipamento industrial triturador de sucata, garantindo a completa descaracterização e inutilização dos equipamentos.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">III. DA DESTRUIÇÃO</div>
+        <p>Foram submetidas à destruição total ${escapeHtml(qtdFem)} máquinas caça-níqueis.</p>
+        <p>O procedimento consistiu em:</p>
+        <ul>
+          <li>Recebimento e conferência dos equipamentos;</li>
+          <li>Inserção das máquinas no triturador industrial de sucata;</li>
+          <li>Trituração integral das estruturas metálicas, componentes eletrônicos, gabinetes e acessórios;</li>
+          <li>Descaracterização irreversível dos equipamentos;</li>
+          <li>Separação dos resíduos recicláveis;</li>
+          <li>Destinação ambientalmente adequada dos materiais resultantes.</li>
+        </ul>
+        <p>As fotografias registram os equipamentos antes da destruição, durante o processo de trituração e após sua completa transformação em sucata fragmentada.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">IV. REGISTRO FOTOGRÁFICO E DOCUMENTAL</div>
+        <p>O procedimento foi integralmente registrado por meio fotográfico, comprovando a destruição total dos equipamentos.</p>
+        <div class="qr-row">
+          <img src="${escapeHtml(getField(doc, "qrCodeUrl", ""))}" alt="QR Code de verificação do laudo" />
+          <div class="qr-text">
+            <strong>Verificação digital do laudo:</strong><br />${escapeHtml(getField(doc, "verificationUrl"))}
+            ${getField(doc, "hashSha256", "") ? `<br /><strong>Hash SHA-256:</strong><br /><span style="font-family:monospace;font-size:8pt;word-break:break-all;">${escapeHtml(getField(doc, "hashSha256"))}</span>` : ""}
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">V. CONCLUSÃO</div>
+        <p>Certifico que os ${escapeHtml(qtdMasc)} equipamentos caça-níqueis foram completamente destruídos mediante processo de trituração industrial, tornando impossível sua recuperação, reutilização ou funcionamento.</p>
+        <p>Todo o procedimento ocorreu em ambiente controlado, seguindo os protocolos de segurança operacional e destinação ambientalmente adequada dos resíduos.</p>
+      </div>
+
+      ${(doc.fotos && doc.fotos.length > 0) ? `
+      <div class="section photos-section">
+        <div class="section-title">REGISTRO FOTOGRÁFICO</div>
+        <div class="photos-grid">
+          ${doc.fotos.map((foto) => `
+            <div class="photo-item">
+              <img src="${escapeHtml(foto.url)}" alt="${escapeHtml(foto.label)}" />
+              <div class="photo-caption">${escapeHtml(foto.label)}</div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+      ` : ""}
+
+      <div class="signature-area">
+        <div class="city-date">Maringá/PR, ${escapeHtml(getField(doc, "destructionDateLong"))}.</div>
+        <div class="signature-block">
+          <div class="signature-line">
+            <div class="signature-name">Jardel F. Pinto</div>
+            <div>Representante Técnico Nomeado</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function buildLaudoMarkup(doc: ExportableDocument) {
+  if (doc.laudoNarrativo) return buildLaudoNarrativoMarkup(doc);
   const logoSrc = getLaudoLogoUrl();
   const docTitle = getField(doc, "docTitle", "LAUDO DE DESTRUIÇÃO DE VEÍCULO");
   const bemLabel = getField(doc, "bemLabel", "veículo");
