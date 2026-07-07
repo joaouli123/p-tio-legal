@@ -1,5 +1,6 @@
 import logo from "@/assets/logo-patio-legal.png";
 import logoMark from "@/assets/logo-patio-legal-mark.png";
+import logoHorizontal from "@/assets/logo-patio-legal-horizontal.png";
 import { cn } from "@/lib/utils";
 
 type LogoSize = "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
@@ -8,8 +9,10 @@ interface LogoProps {
   className?: string;
   showText?: boolean;
   size?: LogoSize;
-  /** Usa a logo completa (escudo + texto) com fundo transparente, sem borda ou sombra. */
+  /** Usa a logo completa (escudo + texto empilhado) com fundo transparente, sem borda ou sombra. */
   mark?: boolean;
+  /** Usa a logo completa com escudo e texto lado a lado (fundo transparente), ideal para espaços baixos e largos como o sidebar. */
+  horizontal?: boolean;
 }
 
 const sizes: Record<string, string> = {
@@ -28,7 +31,17 @@ const markSizes: Record<string, string> = {
   "3xl": "h-44",
 };
 
-export function Logo({ className, showText = true, size = "md", mark = false }: LogoProps) {
+export function Logo({ className, showText = true, size = "md", mark = false, horizontal = false }: LogoProps) {
+  if (horizontal) {
+    return (
+      <img
+        src={logoHorizontal}
+        alt="Pátio Legal Maringá SAT"
+        className={cn(markSizes[size] ?? markSizes.md, "w-auto object-contain select-none", className)}
+      />
+    );
+  }
+
   if (mark) {
     return (
       <img

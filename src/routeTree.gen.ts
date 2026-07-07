@@ -14,6 +14,7 @@ import { Route as UsuariosRouteImport } from './routes/usuarios'
 import { Route as UnidadesRouteImport } from './routes/unidades'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as ProcessosRouteImport } from './routes/processos'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PatioRouteImport } from './routes/patio'
 import { Route as ObjetosRouteImport } from './routes/objetos'
 import { Route as LoginRouteImport } from './routes/login'
@@ -51,6 +52,11 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
 const ProcessosRoute = ProcessosRouteImport.update({
   id: '/processos',
   path: '/processos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PatioRoute = PatioRouteImport.update({
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/objetos': typeof ObjetosRouteWithChildren
   '/patio': typeof PatioRoute
+  '/perfil': typeof PerfilRoute
   '/processos': typeof ProcessosRoute
   '/relatorios': typeof RelatoriosRoute
   '/unidades': typeof UnidadesRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/objetos': typeof ObjetosRouteWithChildren
   '/patio': typeof PatioRoute
+  '/perfil': typeof PerfilRoute
   '/processos': typeof ProcessosRoute
   '/relatorios': typeof RelatoriosRoute
   '/unidades': typeof UnidadesRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/objetos': typeof ObjetosRouteWithChildren
   '/patio': typeof PatioRoute
+  '/perfil': typeof PerfilRoute
   '/processos': typeof ProcessosRoute
   '/relatorios': typeof RelatoriosRoute
   '/unidades': typeof UnidadesRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/objetos'
     | '/patio'
+    | '/perfil'
     | '/processos'
     | '/relatorios'
     | '/unidades'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/objetos'
     | '/patio'
+    | '/perfil'
     | '/processos'
     | '/relatorios'
     | '/unidades'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/objetos'
     | '/patio'
+    | '/perfil'
     | '/processos'
     | '/relatorios'
     | '/unidades'
@@ -254,6 +266,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ObjetosRoute: typeof ObjetosRouteWithChildren
   PatioRoute: typeof PatioRoute
+  PerfilRoute: typeof PerfilRoute
   ProcessosRoute: typeof ProcessosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   UnidadesRoute: typeof UnidadesRoute
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/processos'
       fullPath: '/processos'
       preLoaderRoute: typeof ProcessosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/patio': {
@@ -427,6 +447,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ObjetosRoute: ObjetosRouteWithChildren,
   PatioRoute: PatioRoute,
+  PerfilRoute: PerfilRoute,
   ProcessosRoute: ProcessosRoute,
   RelatoriosRoute: RelatoriosRoute,
   UnidadesRoute: UnidadesRoute,

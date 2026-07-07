@@ -59,7 +59,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="p-4 border-b border-sidebar-border flex justify-center">
-        <Logo mark size="xl" />
+        <Logo horizontal size="md" />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-6">

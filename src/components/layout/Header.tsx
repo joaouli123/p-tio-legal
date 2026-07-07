@@ -113,7 +113,10 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem className="gap-2 cursor-pointer hover:text-gold focus:text-gold">
+              <DropdownMenuItem
+                onClick={() => navigate({ to: "/perfil" })}
+                className="gap-2 cursor-pointer hover:text-gold focus:text-gold"
+              >
                 <User className="h-4 w-4" />
                 Meu perfil
               </DropdownMenuItem>

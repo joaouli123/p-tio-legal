@@ -77,6 +77,9 @@ export interface Profile {
   escopo_valor?: string | null;
   matricula?: string;
   ativo: boolean;
+  avatar_url?: string | null;
+  notificacoes_push_habilitadas?: boolean;
+  biometria_habilitada?: boolean;
   created_at: string;
 }
 
@@ -714,6 +717,49 @@ export async function getCurrentProfile() {
     .single();
   if (error) return null;
   return data as Profile;
+}
+
+const OPTIONAL_PROFILE_COLUMNS = [
+  'avatar_url',
+  'notificacoes_push_habilitadas',
+  'biometria_habilitada',
+] as const;
+
+/**
+ * Updates the CURRENTLY AUTHENTICATED user's own profile row (self-service
+ * "Meu perfil" screen: nome, avatar_url, and device preference columns).
+ * Falls back to omitting any column that hasn't been created yet (see
+ * schema.sql's "PERFIL DO USUÁRIO" / "PREFERÊNCIAS PESSOAIS" blocks),
+ * mirroring the optional-column fallback pattern used for vehicles above.
+ */
+export async function updateCurrentProfile(updates: Partial<Pick<Profile, 'nome' | 'avatar_url' | 'notificacoes_push_habilitadas' | 'biometria_habilitada'>>) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuário não autenticado.');
+
+  let payload: Record<string, unknown> = { ...updates };
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(payload)
+      .eq('id', user.id)
+      .select()
+      .single();
+
+    if (!error) return data as Profile;
+
+    const fallbackPayload = ((): Record<string, unknown> | null => {
+      for (const columnName of OPTIONAL_PROFILE_COLUMNS) {
+        if (payload[columnName] !== undefined && isMissingOptionalColumnError(error, columnName)) {
+          return omitOptionalColumn(payload, columnName);
+        }
+      }
+      return null;
+    })();
+
+    if (!fallbackPayload) throw error;
+    payload = fallbackPayload;
+  }
 }
 
 // ── Checklist de Recepção ─────────────────────────────────────
