@@ -65,7 +65,7 @@ function LoginPage() {
         <div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-info/10 blur-3xl" />
 
         <div className="relative">
-          <Logo size="lg" />
+          <Logo mark size="3xl" />
         </div>
 
         <div className="relative space-y-6 max-w-lg">
@@ -104,7 +104,7 @@ function LoginPage() {
       <div className="flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-8 flex justify-center">
-            <Logo size="lg" />
+            <Logo mark size="2xl" />
           </div>
 
           <div className="rounded-2xl bg-gradient-card border border-border p-8 shadow-elegant">
