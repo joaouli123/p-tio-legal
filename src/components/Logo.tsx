@@ -8,7 +8,7 @@ interface LogoProps {
   className?: string;
   showText?: boolean;
   size?: LogoSize;
-  /** Usa só o emblema (escudo) com fundo transparente, sem texto, borda ou sombra. */
+  /** Usa a logo completa (escudo + texto) com fundo transparente, sem borda ou sombra. */
   mark?: boolean;
 }
 
