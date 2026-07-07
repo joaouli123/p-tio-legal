@@ -1,6 +1,8 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation, useNavigate } from "@tanstack/react-router";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 import appCss from "../styles.css?url";
 
@@ -74,7 +76,19 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const isAuthScreen = pathname === "/login";
+
+  useEffect(() => {
+    if (isAuthScreen) return;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) navigate({ to: "/login" });
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") navigate({ to: "/login" });
+    });
+    return () => subscription.unsubscribe();
+  }, [isAuthScreen, navigate]);
 
   if (isAuthScreen) {
     return <Outlet />;

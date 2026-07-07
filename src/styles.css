@@ -67,8 +67,8 @@
   --popover: oklch(0.20 0.035 260);
   --popover-foreground: oklch(0.97 0.01 250);
 
-  /* Primary = Dourado (gold) */
-  --primary: oklch(0.80 0.14 85);
+  /* Primary = Dourado (gold) — canônico do app (#E8A020) */
+  --primary: oklch(0.758 0.152 75);
   --primary-foreground: oklch(0.18 0.03 260);
 
   --secondary: oklch(0.26 0.035 260);
@@ -92,14 +92,14 @@
   --info: oklch(0.68 0.13 235);
   --info-foreground: oklch(0.98 0.01 0);
 
-  --gold: oklch(0.80 0.14 85);
+  --gold: oklch(0.758 0.152 75);   /* #E8A020 — dourado canônico do app */
   --gold-foreground: oklch(0.18 0.03 260);
 
   --border: oklch(0.30 0.04 260 / 60%);
   --input: oklch(0.28 0.035 260);
-  --ring: oklch(0.80 0.14 85);
+  --ring: oklch(0.758 0.152 75);
 
-  --chart-1: oklch(0.80 0.14 85);   /* gold */
+  --chart-1: oklch(0.758 0.152 75);   /* gold */
   --chart-2: oklch(0.68 0.13 235);  /* info blue */
   --chart-3: oklch(0.68 0.16 152);  /* green */
   --chart-4: oklch(0.62 0.22 25);   /* red */
@@ -107,22 +107,22 @@
 
   --sidebar: oklch(0.13 0.03 260);
   --sidebar-foreground: oklch(0.92 0.01 250);
-  --sidebar-primary: oklch(0.80 0.14 85);
+  --sidebar-primary: oklch(0.758 0.152 75);
   --sidebar-primary-foreground: oklch(0.18 0.03 260);
   --sidebar-accent: oklch(0.22 0.035 260);
   --sidebar-accent-foreground: oklch(0.97 0.01 250);
   --sidebar-border: oklch(0.28 0.035 260 / 60%);
-  --sidebar-ring: oklch(0.80 0.14 85);
+  --sidebar-ring: oklch(0.758 0.152 75);
 
-  /* Gradients & efeitos */
-  --gradient-gold: linear-gradient(135deg, oklch(0.85 0.14 90), oklch(0.70 0.15 70));
+  /* Gradients & efeitos — dourado canônico do app (#F5B845 → #C47A15) */
+  --gradient-gold: linear-gradient(135deg, oklch(0.819 0.145 80), oklch(0.644 0.137 67));
   --gradient-navy: linear-gradient(180deg, oklch(0.18 0.04 260), oklch(0.12 0.03 260));
   --gradient-card: linear-gradient(145deg, oklch(0.22 0.035 260), oklch(0.18 0.03 260));
   --gradient-hero: radial-gradient(ellipse at top, oklch(0.25 0.05 260) 0%, oklch(0.13 0.03 260) 60%);
 
-  --shadow-gold: 0 0 0 1px oklch(0.80 0.14 85 / 25%), 0 10px 30px -10px oklch(0.80 0.14 85 / 35%);
+  --shadow-gold: 0 0 0 1px oklch(0.758 0.152 75 / 25%), 0 10px 30px -10px oklch(0.758 0.152 75 / 35%);
   --shadow-elegant: 0 10px 30px -12px oklch(0.05 0 0 / 60%);
-  --shadow-glow: 0 0 40px oklch(0.80 0.14 85 / 25%);
+  --shadow-glow: 0 0 40px oklch(0.758 0.152 75 / 25%);
 
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -168,7 +168,7 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .border-gold-subtle { border-color: oklch(0.80 0.14 85 / 30%); }
+  .border-gold-subtle { border-color: oklch(0.758 0.152 75 / 30%); }
   .ring-gold { --tw-ring-color: var(--gold); }
 }
 
@@ -177,13 +177,13 @@
   100% { background-position: 200% 0; }
 }
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, oklch(0.80 0.14 85 / 20%), transparent);
+  background: linear-gradient(90deg, transparent, oklch(0.758 0.152 75 / 20%), transparent);
   background-size: 200% 100%;
   animation: shimmer 2.5s infinite;
 }
 
 @keyframes pulse-gold {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(0.80 0.14 85 / 70%); }
-  50% { box-shadow: 0 0 0 10px oklch(0.80 0.14 85 / 0%); }
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.758 0.152 75 / 70%); }
+  50% { box-shadow: 0 0 0 10px oklch(0.758 0.152 75 / 0%); }
 }
 .animate-pulse-gold { animation: pulse-gold 2s infinite; }

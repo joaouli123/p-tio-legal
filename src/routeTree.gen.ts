@@ -15,12 +15,18 @@ import { Route as UnidadesRouteImport } from './routes/unidades'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as ProcessosRouteImport } from './routes/processos'
 import { Route as PatioRouteImport } from './routes/patio'
+import { Route as ObjetosRouteImport } from './routes/objetos'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LaudosRouteImport } from './routes/laudos'
 import { Route as DestruicaoRouteImport } from './routes/destruicao'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as CobrancasRouteImport } from './routes/cobrancas'
+import { Route as ChecklistRouteImport } from './routes/checklist'
 import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VeiculosIdRouteImport } from './routes/veiculos.$id'
+import { Route as ObjetosIdRouteImport } from './routes/objetos.$id'
+import { Route as ApiPlateLookupRouteImport } from './routes/api/plate-lookup'
 
 const VeiculosRoute = VeiculosRouteImport.update({
   id: '/veiculos',
@@ -52,6 +58,11 @@ const PatioRoute = PatioRouteImport.update({
   path: '/patio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ObjetosRoute = ObjetosRouteImport.update({
+  id: '/objetos',
+  path: '/objetos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -72,6 +83,16 @@ const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CobrancasRoute = CobrancasRouteImport.update({
+  id: '/cobrancas',
+  path: '/cobrancas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChecklistRoute = ChecklistRouteImport.update({
+  id: '/checklist',
+  path: '/checklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuditoriaRoute = AuditoriaRouteImport.update({
   id: '/auditoria',
   path: '/auditoria',
@@ -82,108 +103,163 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VeiculosIdRoute = VeiculosIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => VeiculosRoute,
+} as any)
+const ObjetosIdRoute = ObjetosIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ObjetosRoute,
+} as any)
+const ApiPlateLookupRoute = ApiPlateLookupRouteImport.update({
+  id: '/api/plate-lookup',
+  path: '/api/plate-lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auditoria': typeof AuditoriaRoute
+  '/checklist': typeof ChecklistRoute
+  '/cobrancas': typeof CobrancasRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/destruicao': typeof DestruicaoRoute
   '/laudos': typeof LaudosRoute
   '/login': typeof LoginRoute
+  '/objetos': typeof ObjetosRouteWithChildren
   '/patio': typeof PatioRoute
   '/processos': typeof ProcessosRoute
   '/relatorios': typeof RelatoriosRoute
   '/unidades': typeof UnidadesRoute
   '/usuarios': typeof UsuariosRoute
-  '/veiculos': typeof VeiculosRoute
+  '/veiculos': typeof VeiculosRouteWithChildren
+  '/api/plate-lookup': typeof ApiPlateLookupRoute
+  '/objetos/$id': typeof ObjetosIdRoute
+  '/veiculos/$id': typeof VeiculosIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auditoria': typeof AuditoriaRoute
+  '/checklist': typeof ChecklistRoute
+  '/cobrancas': typeof CobrancasRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/destruicao': typeof DestruicaoRoute
   '/laudos': typeof LaudosRoute
   '/login': typeof LoginRoute
+  '/objetos': typeof ObjetosRouteWithChildren
   '/patio': typeof PatioRoute
   '/processos': typeof ProcessosRoute
   '/relatorios': typeof RelatoriosRoute
   '/unidades': typeof UnidadesRoute
   '/usuarios': typeof UsuariosRoute
-  '/veiculos': typeof VeiculosRoute
+  '/veiculos': typeof VeiculosRouteWithChildren
+  '/api/plate-lookup': typeof ApiPlateLookupRoute
+  '/objetos/$id': typeof ObjetosIdRoute
+  '/veiculos/$id': typeof VeiculosIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auditoria': typeof AuditoriaRoute
+  '/checklist': typeof ChecklistRoute
+  '/cobrancas': typeof CobrancasRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/destruicao': typeof DestruicaoRoute
   '/laudos': typeof LaudosRoute
   '/login': typeof LoginRoute
+  '/objetos': typeof ObjetosRouteWithChildren
   '/patio': typeof PatioRoute
   '/processos': typeof ProcessosRoute
   '/relatorios': typeof RelatoriosRoute
   '/unidades': typeof UnidadesRoute
   '/usuarios': typeof UsuariosRoute
-  '/veiculos': typeof VeiculosRoute
+  '/veiculos': typeof VeiculosRouteWithChildren
+  '/api/plate-lookup': typeof ApiPlateLookupRoute
+  '/objetos/$id': typeof ObjetosIdRoute
+  '/veiculos/$id': typeof VeiculosIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auditoria'
+    | '/checklist'
+    | '/cobrancas'
     | '/configuracoes'
     | '/destruicao'
     | '/laudos'
     | '/login'
+    | '/objetos'
     | '/patio'
     | '/processos'
     | '/relatorios'
     | '/unidades'
     | '/usuarios'
     | '/veiculos'
+    | '/api/plate-lookup'
+    | '/objetos/$id'
+    | '/veiculos/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auditoria'
+    | '/checklist'
+    | '/cobrancas'
     | '/configuracoes'
     | '/destruicao'
     | '/laudos'
     | '/login'
+    | '/objetos'
     | '/patio'
     | '/processos'
     | '/relatorios'
     | '/unidades'
     | '/usuarios'
     | '/veiculos'
+    | '/api/plate-lookup'
+    | '/objetos/$id'
+    | '/veiculos/$id'
   id:
     | '__root__'
     | '/'
     | '/auditoria'
+    | '/checklist'
+    | '/cobrancas'
     | '/configuracoes'
     | '/destruicao'
     | '/laudos'
     | '/login'
+    | '/objetos'
     | '/patio'
     | '/processos'
     | '/relatorios'
     | '/unidades'
     | '/usuarios'
     | '/veiculos'
+    | '/api/plate-lookup'
+    | '/objetos/$id'
+    | '/veiculos/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuditoriaRoute: typeof AuditoriaRoute
+  ChecklistRoute: typeof ChecklistRoute
+  CobrancasRoute: typeof CobrancasRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   DestruicaoRoute: typeof DestruicaoRoute
   LaudosRoute: typeof LaudosRoute
   LoginRoute: typeof LoginRoute
+  ObjetosRoute: typeof ObjetosRouteWithChildren
   PatioRoute: typeof PatioRoute
   ProcessosRoute: typeof ProcessosRoute
   RelatoriosRoute: typeof RelatoriosRoute
   UnidadesRoute: typeof UnidadesRoute
   UsuariosRoute: typeof UsuariosRoute
-  VeiculosRoute: typeof VeiculosRoute
+  VeiculosRoute: typeof VeiculosRouteWithChildren
+  ApiPlateLookupRoute: typeof ApiPlateLookupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -230,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PatioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/objetos': {
+      id: '/objetos'
+      path: '/objetos'
+      fullPath: '/objetos'
+      preLoaderRoute: typeof ObjetosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -258,6 +341,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cobrancas': {
+      id: '/cobrancas'
+      path: '/cobrancas'
+      fullPath: '/cobrancas'
+      preLoaderRoute: typeof CobrancasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checklist': {
+      id: '/checklist'
+      path: '/checklist'
+      fullPath: '/checklist'
+      preLoaderRoute: typeof ChecklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auditoria': {
       id: '/auditoria'
       path: '/auditoria'
@@ -272,22 +369,70 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/veiculos/$id': {
+      id: '/veiculos/$id'
+      path: '/$id'
+      fullPath: '/veiculos/$id'
+      preLoaderRoute: typeof VeiculosIdRouteImport
+      parentRoute: typeof VeiculosRoute
+    }
+    '/objetos/$id': {
+      id: '/objetos/$id'
+      path: '/$id'
+      fullPath: '/objetos/$id'
+      preLoaderRoute: typeof ObjetosIdRouteImport
+      parentRoute: typeof ObjetosRoute
+    }
+    '/api/plate-lookup': {
+      id: '/api/plate-lookup'
+      path: '/api/plate-lookup'
+      fullPath: '/api/plate-lookup'
+      preLoaderRoute: typeof ApiPlateLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface ObjetosRouteChildren {
+  ObjetosIdRoute: typeof ObjetosIdRoute
+}
+
+const ObjetosRouteChildren: ObjetosRouteChildren = {
+  ObjetosIdRoute: ObjetosIdRoute,
+}
+
+const ObjetosRouteWithChildren =
+  ObjetosRoute._addFileChildren(ObjetosRouteChildren)
+
+interface VeiculosRouteChildren {
+  VeiculosIdRoute: typeof VeiculosIdRoute
+}
+
+const VeiculosRouteChildren: VeiculosRouteChildren = {
+  VeiculosIdRoute: VeiculosIdRoute,
+}
+
+const VeiculosRouteWithChildren = VeiculosRoute._addFileChildren(
+  VeiculosRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuditoriaRoute: AuditoriaRoute,
+  ChecklistRoute: ChecklistRoute,
+  CobrancasRoute: CobrancasRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   DestruicaoRoute: DestruicaoRoute,
   LaudosRoute: LaudosRoute,
   LoginRoute: LoginRoute,
+  ObjetosRoute: ObjetosRouteWithChildren,
   PatioRoute: PatioRoute,
   ProcessosRoute: ProcessosRoute,
   RelatoriosRoute: RelatoriosRoute,
   UnidadesRoute: UnidadesRoute,
   UsuariosRoute: UsuariosRoute,
-  VeiculosRoute: VeiculosRoute,
+  VeiculosRoute: VeiculosRouteWithChildren,
+  ApiPlateLookupRoute: ApiPlateLookupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

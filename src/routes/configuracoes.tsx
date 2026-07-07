@@ -1,12 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { canAccessAdminArea, getCurrentProfile } from "@/lib/db";
 
 export const Route = createFileRoute("/configuracoes")({
+  beforeLoad: async () => {
+    const profile = await getCurrentProfile();
+    if (!profile) throw redirect({ to: "/login" });
+    if (!canAccessAdminArea(profile.cargo)) throw redirect({ to: "/" });
+  },
   component: ConfigPage,
   head: () => ({ meta: [{ title: "Configurações — Pátio Legal" }] }),
 });

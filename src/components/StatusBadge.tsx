@@ -1,26 +1,30 @@
 import { cn } from "@/lib/utils";
 
 type Status =
-  | "no-patio"
-  | "em-analise"
+  | "no_patio" | "no-patio"
+  | "em_analise" | "em-analise"
   | "destruido"
   | "restituido"
   | "leilao"
   | "doacao"
   | "aguardando";
 
-const map: Record<Status, { label: string; className: string }> = {
-  "no-patio": { label: "No pátio", className: "bg-info/15 text-info border-info/30" },
+const map: Record<string, { label: string; className: string }> = {
+  "no_patio":   { label: "No pátio",   className: "bg-info/15 text-info border-info/30" },
+  "no-patio":   { label: "No pátio",   className: "bg-info/15 text-info border-info/30" },
+  "em_analise": { label: "Em análise", className: "bg-warning/15 text-warning border-warning/30" },
   "em-analise": { label: "Em análise", className: "bg-warning/15 text-warning border-warning/30" },
-  destruido: { label: "Destruído", className: "bg-destructive/15 text-destructive border-destructive/30" },
-  restituido: { label: "Restituído", className: "bg-success/15 text-success border-success/30" },
-  leilao: { label: "Leilão", className: "bg-gold/15 text-gold border-gold/30" },
-  doacao: { label: "Doação", className: "bg-chart-5/15 text-chart-5 border-chart-5/30" },
-  aguardando: { label: "Aguardando decisão", className: "bg-muted text-muted-foreground border-border" },
+  destruido:    { label: "Destruído",  className: "bg-destructive/15 text-destructive border-destructive/30" },
+  restituido:   { label: "Restituído", className: "bg-success/15 text-success border-success/30" },
+  leilao:       { label: "Leilão",     className: "bg-gold/15 text-gold border-gold/30" },
+  doacao:       { label: "Destinação", className: "bg-chart-5/15 text-chart-5 border-chart-5/30" },
+  aguardando:   { label: "Aguardando", className: "bg-muted text-muted-foreground border-border" },
 };
 
+const fallback = { label: "—", className: "bg-muted text-muted-foreground border-border" };
+
 export function StatusBadge({ status }: { status: Status }) {
-  const s = map[status];
+  const s = map[status] ?? fallback;
   return (
     <span
       className={cn(

@@ -3,8 +3,9 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Lock, User, ShieldCheck, ArrowRight } from "lucide-react";
-import { FormEvent } from "react";
+import { Lock, User, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -15,16 +16,51 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const onSubmit = (e: FormEvent) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+  const [resetting, setResetting] = useState(false);
+
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    navigate({ to: "/" });
+    setError("");
+    setInfo("");
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      navigate({ to: "/" });
+    }
+  };
+
+  const onResetPassword = async () => {
+    setError("");
+    setInfo("");
+    if (!email) {
+      setError("Informe o e-mail para receber o link de redefinição de senha.");
+      return;
+    }
+    setResetting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+    setResetting(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setInfo("Enviamos um link de redefinição de senha para o seu e-mail.");
+    }
   };
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       {/* Painel esquerdo — branding */}
       <div className="hidden lg:flex relative bg-gradient-hero overflow-hidden p-12 flex-col justify-between">
-        <div className="absolute inset-0 opacity-30 [background-image:radial-gradient(oklch(0.80_0.14_85/30%)_1px,transparent_1px)] [background-size:24px_24px]" />
+        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(oklch(0.80_0.14_85/30%)_1px,transparent_1px)] bg-size-[24px_24px]" />
         <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-gold/10 blur-3xl" />
         <div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-info/10 blur-3xl" />
 
@@ -84,14 +120,17 @@ function LoginPage() {
 
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="user">Usuário</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    id="user"
-                    placeholder="seu.usuario"
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
                     className="pl-10 h-11 bg-input border-border focus-visible:ring-gold"
-                    defaultValue="master.admin"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -105,27 +144,49 @@ function LoginPage() {
                     type="password"
                     placeholder="••••••••"
                     className="pl-10 h-11 bg-input border-border focus-visible:ring-gold"
-                    defaultValue="demo12345"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
                   />
                 </div>
               </div>
 
+              {error && (
+                <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
+                  {error}
+                </p>
+              )}
+              {info && (
+                <p className="text-sm text-success bg-success/10 border border-success/20 rounded-lg px-3 py-2">
+                  {info}
+                </p>
+              )}
+
               <div className="flex items-center justify-between text-xs">
                 <label className="flex items-center gap-2 cursor-pointer text-muted-foreground">
-                  <input type="checkbox" className="accent-[oklch(0.80_0.14_85)]" />
+                  <input type="checkbox" className="accent-[oklch(0.758_0.152_75)]" />
                   Manter conectado
                 </label>
-                <a href="#" className="text-gold hover:underline">
-                  Esqueceu a senha?
-                </a>
+                <button
+                  type="button"
+                  onClick={() => void onResetPassword()}
+                  disabled={resetting}
+                  className="text-gold hover:underline disabled:opacity-60"
+                >
+                  {resetting ? "Enviando…" : "Esqueceu a senha?"}
+                </button>
               </div>
 
               <Button
                 type="submit"
+                disabled={loading}
                 className="w-full h-11 bg-gradient-gold text-primary-foreground hover:opacity-90 shadow-gold font-semibold gap-2"
               >
-                Acessar sistema
-                <ArrowRight className="h-4 w-4" />
+                {loading ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Entrando...</>
+                ) : (
+                  <>Acessar sistema <ArrowRight className="h-4 w-4" /></>
+                )}
               </Button>
             </form>
 

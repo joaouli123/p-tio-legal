@@ -1,24 +1,69 @@
-import { createFileRoute } from "@tanstack/react-router";
-
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, FileText, Calendar, Building2, ChevronRight } from "lucide-react";
+import { Search, FileText, Calendar, Building2, ChevronRight, Loader2, Eye } from "lucide-react";
+import { getVeiculos, type Veiculo } from "@/lib/db";
 
 export const Route = createFileRoute("/processos")({
   component: ProcessosPage,
   head: () => ({ meta: [{ title: "Processos — Pátio Legal" }] }),
 });
 
-const processos = [
-  { num: "0001234-56.2024.8.16.0190", orgao: "Vara Criminal de Maringá", delegacia: "18ª SDP Maringá", veiculos: 3, abertura: "10/05/2024", status: "em-analise" as const },
-  { num: "0002345-67.2024.8.16.0190", orgao: "Vara Criminal de Maringá", delegacia: "1ª DP Maringá", veiculos: 1, abertura: "12/05/2024", status: "no-patio" as const },
-  { num: "0003456-78.2024.8.16.0190", orgao: "DENARC", delegacia: "2ª DP Maringá", veiculos: 5, abertura: "08/05/2024", status: "destruido" as const },
-  { num: "0004567-89.2024.8.16.0190", orgao: "Vara Criminal de Maringá", delegacia: "18ª SDP Maringá", veiculos: 2, abertura: "15/05/2024", status: "leilao" as const },
-];
-
 function ProcessosPage() {
+  const navigate = useNavigate();
+  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<Veiculo | null>(null);
+
+  const NO_PROCESS_KEY = "Sem processo";
+
+  const openProcessVehicles = (processo: string, vinculados: Veiculo[]) => {
+    if (vinculados.length === 1) {
+      void navigate({ to: "/veiculos/$id", params: { id: vinculados[0].id } });
+      return;
+    }
+
+    // The "Sem processo" bucket has no processo number to search by — a textual
+    // search for "Sem processo" would return nothing. Just preview the first
+    // vehicle instead of navigating to an empty search result.
+    if (processo === NO_PROCESS_KEY) {
+      if (vinculados.length > 0) setSelected(vinculados[0]);
+      return;
+    }
+
+    void navigate({
+      to: "/veiculos",
+      search: { q: processo } as never,
+    });
+  };
+
+  useEffect(() => {
+    getVeiculos()
+      .then(data => {
+        setVeiculos(data);
+        if (data.length > 0) setSelected(data[0]);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Group by processo number
+  const byProcesso = veiculos.reduce<Record<string, Veiculo[]>>((acc, v) => {
+    const key = v.processo ?? "Sem processo";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(v);
+    return acc;
+  }, {});
+
+  const processos = Object.entries(byProcesso).filter(([num]) =>
+    !query || num.toLowerCase().includes(query.toLowerCase()) ||
+    byProcesso[num].some(v => v.delegacia_nome?.toLowerCase().includes(query.toLowerCase()))
+  );
+
   return (
     <>
       <PageHeader
@@ -31,66 +76,116 @@ function ProcessosPage() {
         <div className="lg:col-span-2 space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por número de processo…" className="pl-10 bg-muted/40" />
+            <Input
+              placeholder="Buscar por número de processo ou delegacia…"
+              className="pl-10 bg-muted/40"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
           </div>
 
-          {processos.map((p) => (
-            <div key={p.num} className="rounded-xl bg-gradient-card border border-border p-5 shadow-elegant hover:border-gold-subtle transition-all group cursor-pointer">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="h-4 w-4 text-gold shrink-0" />
-                    <span className="font-mono font-bold text-sm text-gold truncate">{p.num}</span>
+          {loading ? (
+            <div className="flex items-center justify-center py-16 gap-3 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Carregando processos…</span>
+            </div>
+          ) : processos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-2 text-muted-foreground">
+              <FileText className="h-12 w-12 opacity-30" />
+              <p className="font-medium">Nenhum processo encontrado</p>
+            </div>
+          ) : (
+            processos.map(([num, vs]) => (
+              <div
+                key={num}
+                onClick={() => openProcessVehicles(num, vs)}
+                className={`rounded-xl bg-gradient-card border p-5 shadow-elegant hover:border-gold-subtle transition-all group cursor-pointer ${selected && vs.some(v => v.id === selected.id) ? "border-gold/50" : "border-border"}`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="h-4 w-4 text-gold shrink-0" />
+                      <span className="font-mono font-bold text-sm text-gold truncate">{num}</span>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Building2 className="h-3.5 w-3.5" />
+                        {vs[0].delegacia_nome ?? "—"}
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {new Date(vs[0].created_at).toLocaleDateString('pt-BR')}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground font-semibold">{vs.length}</span>
+                        <span className="text-muted-foreground text-xs">veículo(s) vinculado(s)</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Building2 className="h-3.5 w-3.5" />
-                      {p.orgao}
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Building2 className="h-3.5 w-3.5" />
-                      {p.delegacia}
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar className="h-3.5 w-3.5" />
-                      Aberto em {p.abertura}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-foreground font-semibold">{p.veiculos}</span>
-                      <span className="text-muted-foreground text-xs">veículo(s) vinculado(s)</span>
-                    </div>
+                  <div className="flex flex-col items-end gap-3">
+                    <StatusBadge status={vs[0].status as any} />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-gold transition-colors" />
                   </div>
-                </div>
-                <div className="flex flex-col items-end gap-3">
-                  <StatusBadge status={p.status} />
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-gold transition-colors" />
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="rounded-xl bg-gradient-card border border-border p-5 shadow-elegant h-fit">
-          <h3 className="font-semibold text-lg mb-1">Linha do tempo</h3>
-          <p className="text-xs text-muted-foreground mb-4">Histórico imutável • Processo destacado</p>
-          <ol className="relative border-l border-gold/30 ml-2 space-y-5">
-            {[
-              { d: "10/05/2024 09:30", t: "Entrada no pátio", desc: "Veículo recebido — Setor A vaga 142", color: "info" },
-              { d: "10/05/2024 14:20", t: "Fotos de check-in (12)", desc: "Estado: avariado lateralmente", color: "info" },
-              { d: "12/05/2024 14:20", t: "Laudo emitido", desc: "Perito: M. Costa", color: "gold" },
-              { d: "13/05/2024 10:15", t: "Em análise pericial", desc: "Aguardando alvará judicial", color: "warning" },
-              { d: "—", t: "Próxima etapa", desc: "Decisão judicial pendente", color: "muted" },
-            ].map((e, i) => (
-              <li key={i} className="ml-5">
-                <span className={`absolute -left-[7px] h-3 w-3 rounded-full bg-${e.color} border-2 border-sidebar`} />
-                <p className="text-xs text-muted-foreground">{e.d}</p>
-                <p className="font-semibold text-sm">{e.t}</p>
-                <p className="text-xs text-muted-foreground">{e.desc}</p>
-              </li>
-            ))}
-          </ol>
+          <h3 className="font-semibold text-lg mb-1">Detalhes do processo</h3>
+          <p className="text-xs text-muted-foreground mb-4">O clique no cartão abre a listagem dos veículos vinculados a este processo.</p>
+          {selected ? (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-lg bg-muted/20 p-3 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Placa</p>
+                <p className="font-mono font-bold text-gold text-lg">{selected.placa}</p>
+              </div>
+              <div className="rounded-lg bg-muted/20 p-3 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Modelo</p>
+                <p className="font-semibold">{selected.marca_modelo}</p>
+              </div>
+              {selected.ano && (
+                <div className="rounded-lg bg-muted/20 p-3 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">Ano</p>
+                  <p>{selected.ano}</p>
+                </div>
+              )}
+              <div className="rounded-lg bg-muted/20 p-3 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Delegacia</p>
+                <p>{selected.delegacia_nome ?? "—"}</p>
+              </div>
+              <div className="rounded-lg bg-muted/20 p-3 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Status</p>
+                <StatusBadge status={selected.status as any} />
+              </div>
+              {selected.local_vaga && (
+                <div className="rounded-lg bg-muted/20 p-3 border border-border">
+                  <p className="text-xs text-muted-foreground mb-1">Vaga</p>
+                  <p className="font-mono">{selected.local_vaga}</p>
+                </div>
+              )}
+              <div className="rounded-lg bg-muted/20 p-3 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Entrada</p>
+                <p>{new Date(selected.created_at).toLocaleString('pt-BR')}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <Button variant="outline" className="gap-2 border-border" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: selected.id } })}>
+                  <Eye className="h-4 w-4" /> Abrir cadastro
+                </Button>
+                {selected.processo && (
+                  <Button className="gap-2 bg-gradient-gold text-primary-foreground hover:opacity-90 shadow-gold" onClick={() => openProcessVehicles(selected.processo, byProcesso[selected.processo] ?? [selected])}>
+                    <FileText className="h-4 w-4" /> Ver todos do processo
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Selecione um processo para ver detalhes</p>
+          )}
         </div>
       </div>
     </>
   );
 }
+
