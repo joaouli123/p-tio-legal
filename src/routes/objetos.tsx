@@ -155,11 +155,12 @@ function NovoObjetoDialog({ open, onClose, onSaved }: { open: boolean; onClose: 
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl bg-card border-border max-h-[90vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl font-bold">Cadastrar novo objeto</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          <div className="space-y-4 overflow-y-auto px-6 py-2 flex-1">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Tipo</Label>
@@ -230,7 +231,8 @@ function NovoObjetoDialog({ open, onClose, onSaved }: { open: boolean; onClose: 
             <Textarea value={form.observacoes} onChange={e => set("observacoes", e.target.value)} placeholder="Informações adicionais sobre o objeto..." className="bg-muted/40 resize-none" rows={3} />
           </div>
           {error && <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
-          <DialogFooter className="gap-2 pt-2">
+          </div>
+          <DialogFooter className="gap-2 px-6 py-4 border-t border-border bg-card shrink-0">
             <Button type="button" variant="outline" onClick={onClose} className="border-border">Cancelar</Button>
             <Button type="submit" disabled={saving} className="bg-gradient-gold text-primary-foreground hover:opacity-90 shadow-gold gap-2">
               {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Salvando...</> : <><Plus className="h-4 w-4" /> Cadastrar objeto</>}
