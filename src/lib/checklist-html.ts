@@ -1,4 +1,5 @@
 import logoMaringaSat from "@/assets/logo-maringa-sat.jpg";
+import signatureImage from "@/assets/assianturaa.jpeg";
 import checklistCarro from "@/assets/checklist-carro.png";
 import { CHECKLIST_ITEMS } from "@/lib/checklist-config";
 import type { Veiculo, Servico } from "@/lib/db";
@@ -36,6 +37,19 @@ function getLogoUrl(): string {
 
 function getCarImageUrl(): string {
   return resolveAssetUrl(checklistCarro as string);
+}
+
+function getSignatureUrl(): string {
+  return resolveAssetUrl(signatureImage as string);
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function buildQrUrl(veiculo: Veiculo): string {
@@ -116,6 +130,7 @@ export function buildChecklistHtml(data: ChecklistPdfData): string {
   const numero = data.numero ?? veiculo.id.slice(-7).toUpperCase();
   const logoSrc = getLogoUrl();
   const carImageSrc = getCarImageUrl();
+  const signatureSrc = getSignatureUrl();
   const qrSrc = buildQrUrl(veiculo);
   const now = formatDt();
 
@@ -181,11 +196,18 @@ export function buildChecklistHtml(data: ChecklistPdfData): string {
     .filter((value): value is string => !!value)
     .join(" • ");
 
-  const photosHtml = PHOTO_SLOTS.map((slot) => {
-    const foto = data.fotos?.find((item) => item.label.toUpperCase() === slot);
+  const photoItems = data.fotos && data.fotos.length > 0
+    ? data.fotos.map((foto, index) => ({
+      url: foto.url,
+      label: foto.label.trim().toUpperCase() || `FOTO ${index + 1}`,
+    }))
+    : PHOTO_SLOTS.map((slot) => ({ url: "", label: slot }));
+
+  const photosHtml = photoItems.map((foto) => {
+    const label = foto.label;
     return `<div class="photo-box">
-      ${foto ? `<img src="${foto.url}" alt="${slot}" />` : `<div class="photo-ph-txt">${slot}</div>`}
-      <div class="photo-lbl">${slot}</div>
+      ${foto.url ? `<img src="${escapeHtml(foto.url)}" alt="${escapeHtml(label)}" />` : `<div class="photo-ph-txt">${escapeHtml(label)}</div>`}
+      <div class="photo-lbl">${escapeHtml(label)}</div>
     </div>`;
   }).join("");
 
@@ -197,7 +219,9 @@ export function buildChecklistHtml(data: ChecklistPdfData): string {
     <div class="sig-blk">
       ${index === 0 ? secHead(9, "ASSINATURAS") : '<div class="sec-head"><span class="sec-num">&nbsp;</span><span>&nbsp;</span></div>'}
       <div class="sig-inner">
-        <div class="sig-area"></div>
+        ${index === 0
+          ? `<img class="sig-image" src="${escapeHtml(signatureSrc)}" alt="Assinatura de Jardel Francisco Pinto" />`
+          : '<div class="sig-area"></div>'}
         <div class="sig-name">${signature.name}</div>
         <div class="sig-role">${signature.role}</div>
         <div class="sig-role">${signature.id}</div>
@@ -257,8 +281,8 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8px;color:#111;background:
 .summary-strip{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:2px;font-size:6.8px;font-weight:bold;color:#1A3560;}
 .obs-box{min-height:70px;border:1px solid #d6dde8;border-radius:4px;background:#f8fafc;padding:8px;font-size:7.5px;line-height:1.45;white-space:pre-wrap;}
 .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:4px;}
-.photo-box{border:1px solid #bbb;height:70px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:3px;background:#f8fafc;overflow:hidden;position:relative;}
-.photo-box img{width:100%;height:100%;object-fit:cover;}
+.photo-box{border:1px solid #bbb;min-height:70px;aspect-ratio:4/3;height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:3px;background:#f8fafc;overflow:hidden;position:relative;}
+.photo-box img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;}
 .photo-lbl{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:6px;background:rgba(255,255,255,.85);padding:1px 0;}
 .photo-ph-txt{font-size:6px;color:#999;text-align:center;}
 .fin-sec{border:1.5px solid #1A3560;margin-bottom:2px;overflow:hidden;}
@@ -275,6 +299,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8px;color:#111;background:
 .sig-blk{border:1.5px solid #1A3560;overflow:hidden;}
 .sig-inner{padding:5px 7px;}
 .sig-area{height:30px;border-bottom:1px solid #444;margin:6px 0 3px;}
+.sig-image{display:block;width:100%;height:auto;max-height:56px;object-fit:contain;margin:0 auto 2px;}
 .sig-name{font-size:7.5px;font-weight:bold;text-align:center;}
 .sig-role{font-size:6.5px;color:#555;text-align:center;}
 .val-row{display:grid;grid-template-columns:1fr auto;gap:2px;margin-bottom:2px;}

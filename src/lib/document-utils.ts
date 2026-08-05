@@ -1,4 +1,5 @@
 import logoMaringaSat from "@/assets/logo-maringa-sat.jpg";
+import signatureImage from "@/assets/assianturaa.jpeg";
 import reportHeaderLogo from "../../logo cabecario.jpeg";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -114,6 +115,7 @@ const VEHICLE_STATUS_LABELS: Record<string, string> = {
 // Used for laudo letterhead — the formal document logo from the model
 const LAUDO_LOGO_SRC = logoMaringaSat;
 const REPORT_HEADER_LOGO_SRC = reportHeaderLogo;
+const SIGNATURE_SRC = signatureImage;
 
 function getLaudoLogoUrl() {
   return typeof window !== "undefined"
@@ -125,6 +127,12 @@ function getReportHeaderLogoUrl() {
   return typeof window !== "undefined"
     ? new URL(REPORT_HEADER_LOGO_SRC as string, window.location.href).href
     : (REPORT_HEADER_LOGO_SRC as string);
+}
+
+function getSignatureUrl() {
+  return typeof window !== "undefined"
+    ? new URL(SIGNATURE_SRC as string, window.location.href).href
+    : (SIGNATURE_SRC as string);
 }
 
 function sanitizeFilename(value: string) {
@@ -799,6 +807,7 @@ async function createGenericPdfBlob(doc: ExportableDocument) {
   const margin = isWide ? 28 : 40;
   const contentWidth = pageWidth - (margin * 2);
   const headerLogoData = await fetchImageDataUrl(getReportHeaderLogoUrl());
+  const signatureData = await fetchImageDataUrl(getSignatureUrl());
   let y = margin;
 
   const ensureSpace = (height: number) => {
@@ -950,6 +959,30 @@ async function createGenericPdfBlob(doc: ExportableDocument) {
     doc.footer.filter(Boolean).forEach((line) => drawParagraph(line, 9.5, 4));
   }
 
+  ensureSpace(signatureData ? 170 : 72);
+  pdf.setDrawColor(221, 213, 197);
+  pdf.line(margin, y, pageWidth - margin, y);
+  y += 12;
+  if (signatureData) {
+    const signatureWidth = Math.min(220, contentWidth);
+    const signatureHeight = signatureWidth * (9 / 16);
+    pdf.addImage(
+      signatureData,
+      inferImageFormat(signatureData),
+      pageWidth - margin - signatureWidth,
+      y,
+      signatureWidth,
+      signatureHeight,
+    );
+    y += signatureHeight + 4;
+  }
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9.5);
+  pdf.text("Jardel F. Pinto", pageWidth - margin - 110, y, { align: "center" });
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8.5);
+  pdf.text("Representante Técnico Nomeado", pageWidth - margin - 110, y + 12, { align: "center" });
+
   return pdf.output("blob");
 }
 
@@ -972,6 +1005,9 @@ function buildDefaultMarkup(doc: ExportableDocument) {
       h2 { font-size: 14px; margin: 22px 0 8px; text-transform: uppercase; letter-spacing: 0.08em; }
       p { font-size: 12px; line-height: 1.65; margin: 0 0 10px; text-align: justify; }
       .footer { margin-top: 28px; }
+      .signature-area { margin-top: 30px; page-break-inside: avoid; text-align: center; }
+      .signature-image { width: 260px; height: auto; max-height: 146px; object-fit: contain; display: block; margin: 0 auto 4px; }
+      .signature-name { font-weight: bold; }
     </style>
     <div class="doc-root">
       <div class="doc-shell">
@@ -987,6 +1023,11 @@ function buildDefaultMarkup(doc: ExportableDocument) {
         `).join("")}
         <div class="footer">
           ${doc.footer.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
+        </div>
+        <div class="signature-area">
+          <img class="signature-image" src="${getSignatureUrl()}" alt="Assinatura de Jardel Francisco Pinto" />
+          <div class="signature-name">Jardel F. Pinto</div>
+          <div>Representante Técnico Nomeado</div>
         </div>
       </div>
     </div>
@@ -1022,7 +1063,8 @@ function buildLaudoNarrativoMarkup(doc: ExportableDocument) {
       .signature-area { margin-top: 40px; }
       .city-date { font-size: 11pt; margin-bottom: 50px; }
       .signature-block { display: flex; justify-content: flex-end; }
-      .signature-line { text-align: center; width: 300px; border-top: 1px solid #000000; padding-top: 6px; font-size: 11pt; }
+      .signature-line { text-align: center; width: 300px; padding-top: 6px; font-size: 11pt; }
+      .signature-image { display: block; width: 300px; height: auto; max-height: 169px; object-fit: contain; margin-bottom: 4px; }
       .signature-name { font-weight: bold; }
       .photos-section { margin-top: 20px; }
       .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
@@ -1111,6 +1153,7 @@ function buildLaudoNarrativoMarkup(doc: ExportableDocument) {
         <div class="city-date">Maringá/PR, ${escapeHtml(getField(doc, "destructionDateLong"))}.</div>
         <div class="signature-block">
           <div class="signature-line">
+            <img class="signature-image" src="${getSignatureUrl()}" alt="Assinatura de Jardel Francisco Pinto" />
             <div class="signature-name">Jardel F. Pinto</div>
             <div>Representante Técnico Nomeado</div>
           </div>
@@ -1160,7 +1203,8 @@ function buildLaudoMarkup(doc: ExportableDocument) {
       .signature-area { margin-top: 40px; }
       .city-date { font-size: 11pt; margin-bottom: 50px; }
       .signature-block { display: flex; justify-content: flex-end; }
-      .signature-line { text-align: center; width: 300px; border-top: 1px solid #000000; padding-top: 6px; font-size: 11pt; }
+      .signature-line { text-align: center; width: 300px; padding-top: 6px; font-size: 11pt; }
+      .signature-image { display: block; width: 300px; height: auto; max-height: 169px; object-fit: contain; margin-bottom: 4px; }
       .signature-name { font-weight: bold; }
       .photos-section { margin-top: 20px; }
       .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
@@ -1257,6 +1301,7 @@ function buildLaudoMarkup(doc: ExportableDocument) {
         <div class="city-date">Maringá/PR, ${escapeHtml(getField(doc, "destructionDateLong"))}.</div>
         <div class="signature-block">
           <div class="signature-line">
+            <img class="signature-image" src="${getSignatureUrl()}" alt="Assinatura de Jardel Francisco Pinto" />
             <div class="signature-name">Jardel F. Pinto</div>
             <div>Representante Técnico Nomeado</div>
           </div>
@@ -1293,6 +1338,9 @@ function buildReportMarkup(doc: ExportableDocument) {
       .data-table td { border: 1px solid #ddd5c5; padding: 5px 8px; font-size: 11px; color: #243549; }
       .data-table tr:nth-child(even) td { background: #f9f8f5; }
       .footer { margin-top: 20px; color: #5b6676; font-size: 11px; }
+      .signature-area { margin-top: 28px; padding-top: 14px; border-top: 1px solid #ddd5c5; text-align: center; page-break-inside: avoid; }
+      .signature-image { width: 260px; height: auto; max-height: 146px; object-fit: contain; display: block; margin: 0 auto 4px; }
+      .signature-name { font-weight: 700; color: #10243e; }
       @media print {
         .doc-root { padding: 0; }
         .report-shell { box-shadow: none; border-radius: 0; border: 0; }
@@ -1335,6 +1383,11 @@ function buildReportMarkup(doc: ExportableDocument) {
         `).join("") : ""}
         <div class="footer">
           ${doc.footer.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}
+        </div>
+        <div class="signature-area">
+          <img class="signature-image" src="${getSignatureUrl()}" alt="Assinatura de Jardel Francisco Pinto" />
+          <div class="signature-name">Jardel F. Pinto</div>
+          <div>Representante Técnico Nomeado</div>
         </div>
       </div>
     </div>
