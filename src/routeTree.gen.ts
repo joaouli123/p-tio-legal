@@ -9,94 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VeiculosRouteImport } from './routes/veiculos'
-import { Route as UsuariosRouteImport } from './routes/usuarios'
-import { Route as UnidadesRouteImport } from './routes/unidades'
-import { Route as RelatoriosRouteImport } from './routes/relatorios'
-import { Route as ProcessosRouteImport } from './routes/processos'
-import { Route as PerfilRouteImport } from './routes/perfil'
-import { Route as PatioRouteImport } from './routes/patio'
-import { Route as ObjetosRouteImport } from './routes/objetos'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LaudosRouteImport } from './routes/laudos'
-import { Route as DestruicaoRouteImport } from './routes/destruicao'
-import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
-import { Route as CobrancasRouteImport } from './routes/cobrancas'
-import { Route as ChecklistRouteImport } from './routes/checklist'
-import { Route as AuditoriaRouteImport } from './routes/auditoria'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as VeiculosIdRouteImport } from './routes/veiculos.$id'
-import { Route as ObjetosIdRouteImport } from './routes/objetos.$id'
+import { Route as AuditoriaRouteImport } from './routes/auditoria'
+import { Route as ChecklistRouteImport } from './routes/checklist'
+import { Route as CobrancasRouteImport } from './routes/cobrancas'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as DestruicaoRouteImport } from './routes/destruicao'
+import { Route as LaudosRouteImport } from './routes/laudos'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ObjetosRouteImport } from './routes/objetos'
+import { Route as PatioRouteImport } from './routes/patio'
+import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as ProcessosRouteImport } from './routes/processos'
+import { Route as RelatoriosRouteImport } from './routes/relatorios'
+import { Route as UnidadesRouteImport } from './routes/unidades'
+import { Route as UsuariosRouteImport } from './routes/usuarios'
+import { Route as VeiculosRouteImport } from './routes/veiculos'
 import { Route as ApiPlateLookupRouteImport } from './routes/api/plate-lookup'
+import { Route as ObjetosIdRouteImport } from './routes/objetos.$id'
+import { Route as VeiculosIdRouteImport } from './routes/veiculos.$id'
 
-const VeiculosRoute = VeiculosRouteImport.update({
-  id: '/veiculos',
-  path: '/veiculos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UsuariosRoute = UsuariosRouteImport.update({
-  id: '/usuarios',
-  path: '/usuarios',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UnidadesRoute = UnidadesRouteImport.update({
-  id: '/unidades',
-  path: '/unidades',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RelatoriosRoute = RelatoriosRouteImport.update({
-  id: '/relatorios',
-  path: '/relatorios',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProcessosRoute = ProcessosRouteImport.update({
-  id: '/processos',
-  path: '/processos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PerfilRoute = PerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PatioRoute = PatioRouteImport.update({
-  id: '/patio',
-  path: '/patio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ObjetosRoute = ObjetosRouteImport.update({
-  id: '/objetos',
-  path: '/objetos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LaudosRoute = LaudosRouteImport.update({
-  id: '/laudos',
-  path: '/laudos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DestruicaoRoute = DestruicaoRouteImport.update({
-  id: '/destruicao',
-  path: '/destruicao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
-  id: '/configuracoes',
-  path: '/configuracoes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CobrancasRoute = CobrancasRouteImport.update({
-  id: '/cobrancas',
-  path: '/cobrancas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChecklistRoute = ChecklistRouteImport.update({
-  id: '/checklist',
-  path: '/checklist',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuditoriaRoute = AuditoriaRouteImport.update({
@@ -104,25 +39,90 @@ const AuditoriaRoute = AuditoriaRouteImport.update({
   path: '/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ChecklistRoute = ChecklistRouteImport.update({
+  id: '/checklist',
+  path: '/checklist',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VeiculosIdRoute = VeiculosIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => VeiculosRoute,
+const CobrancasRoute = CobrancasRouteImport.update({
+  id: '/cobrancas',
+  path: '/cobrancas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DestruicaoRoute = DestruicaoRouteImport.update({
+  id: '/destruicao',
+  path: '/destruicao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaudosRoute = LaudosRouteImport.update({
+  id: '/laudos',
+  path: '/laudos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ObjetosRoute = ObjetosRouteImport.update({
+  id: '/objetos',
+  path: '/objetos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatioRoute = PatioRouteImport.update({
+  id: '/patio',
+  path: '/patio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProcessosRoute = ProcessosRouteImport.update({
+  id: '/processos',
+  path: '/processos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelatoriosRoute = RelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnidadesRoute = UnidadesRouteImport.update({
+  id: '/unidades',
+  path: '/unidades',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsuariosRoute = UsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VeiculosRoute = VeiculosRouteImport.update({
+  id: '/veiculos',
+  path: '/veiculos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPlateLookupRoute = ApiPlateLookupRouteImport.update({
+  id: '/api/plate-lookup',
+  path: '/api/plate-lookup',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ObjetosIdRoute = ObjetosIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ObjetosRoute,
 } as any)
-const ApiPlateLookupRoute = ApiPlateLookupRouteImport.update({
-  id: '/api/plate-lookup',
-  path: '/api/plate-lookup',
-  getParentRoute: () => rootRouteImport,
+const VeiculosIdRoute = VeiculosIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => VeiculosRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -277,102 +277,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/veiculos': {
-      id: '/veiculos'
-      path: '/veiculos'
-      fullPath: '/veiculos'
-      preLoaderRoute: typeof VeiculosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/usuarios': {
-      id: '/usuarios'
-      path: '/usuarios'
-      fullPath: '/usuarios'
-      preLoaderRoute: typeof UsuariosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/unidades': {
-      id: '/unidades'
-      path: '/unidades'
-      fullPath: '/unidades'
-      preLoaderRoute: typeof UnidadesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/relatorios': {
-      id: '/relatorios'
-      path: '/relatorios'
-      fullPath: '/relatorios'
-      preLoaderRoute: typeof RelatoriosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/processos': {
-      id: '/processos'
-      path: '/processos'
-      fullPath: '/processos'
-      preLoaderRoute: typeof ProcessosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/perfil': {
-      id: '/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof PerfilRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/patio': {
-      id: '/patio'
-      path: '/patio'
-      fullPath: '/patio'
-      preLoaderRoute: typeof PatioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/objetos': {
-      id: '/objetos'
-      path: '/objetos'
-      fullPath: '/objetos'
-      preLoaderRoute: typeof ObjetosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/laudos': {
-      id: '/laudos'
-      path: '/laudos'
-      fullPath: '/laudos'
-      preLoaderRoute: typeof LaudosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/destruicao': {
-      id: '/destruicao'
-      path: '/destruicao'
-      fullPath: '/destruicao'
-      preLoaderRoute: typeof DestruicaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/configuracoes': {
-      id: '/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/configuracoes'
-      preLoaderRoute: typeof ConfiguracoesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cobrancas': {
-      id: '/cobrancas'
-      path: '/cobrancas'
-      fullPath: '/cobrancas'
-      preLoaderRoute: typeof CobrancasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checklist': {
-      id: '/checklist'
-      path: '/checklist'
-      fullPath: '/checklist'
-      preLoaderRoute: typeof ChecklistRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auditoria': {
@@ -382,19 +291,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/checklist': {
+      id: '/checklist'
+      path: '/checklist'
+      fullPath: '/checklist'
+      preLoaderRoute: typeof ChecklistRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/veiculos/$id': {
-      id: '/veiculos/$id'
-      path: '/$id'
-      fullPath: '/veiculos/$id'
-      preLoaderRoute: typeof VeiculosIdRouteImport
-      parentRoute: typeof VeiculosRoute
+    '/cobrancas': {
+      id: '/cobrancas'
+      path: '/cobrancas'
+      fullPath: '/cobrancas'
+      preLoaderRoute: typeof CobrancasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/destruicao': {
+      id: '/destruicao'
+      path: '/destruicao'
+      fullPath: '/destruicao'
+      preLoaderRoute: typeof DestruicaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/laudos': {
+      id: '/laudos'
+      path: '/laudos'
+      fullPath: '/laudos'
+      preLoaderRoute: typeof LaudosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/objetos': {
+      id: '/objetos'
+      path: '/objetos'
+      fullPath: '/objetos'
+      preLoaderRoute: typeof ObjetosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patio': {
+      id: '/patio'
+      path: '/patio'
+      fullPath: '/patio'
+      preLoaderRoute: typeof PatioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/processos': {
+      id: '/processos'
+      path: '/processos'
+      fullPath: '/processos'
+      preLoaderRoute: typeof ProcessosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relatorios': {
+      id: '/relatorios'
+      path: '/relatorios'
+      fullPath: '/relatorios'
+      preLoaderRoute: typeof RelatoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unidades': {
+      id: '/unidades'
+      path: '/unidades'
+      fullPath: '/unidades'
+      preLoaderRoute: typeof UnidadesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/usuarios': {
+      id: '/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof UsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/veiculos': {
+      id: '/veiculos'
+      path: '/veiculos'
+      fullPath: '/veiculos'
+      preLoaderRoute: typeof VeiculosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/plate-lookup': {
+      id: '/api/plate-lookup'
+      path: '/api/plate-lookup'
+      fullPath: '/api/plate-lookup'
+      preLoaderRoute: typeof ApiPlateLookupRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/objetos/$id': {
       id: '/objetos/$id'
@@ -403,12 +403,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ObjetosIdRouteImport
       parentRoute: typeof ObjetosRoute
     }
-    '/api/plate-lookup': {
-      id: '/api/plate-lookup'
-      path: '/api/plate-lookup'
-      fullPath: '/api/plate-lookup'
-      preLoaderRoute: typeof ApiPlateLookupRouteImport
-      parentRoute: typeof rootRouteImport
+    '/veiculos/$id': {
+      id: '/veiculos/$id'
+      path: '/$id'
+      fullPath: '/veiculos/$id'
+      preLoaderRoute: typeof VeiculosIdRouteImport
+      parentRoute: typeof VeiculosRoute
     }
   }
 }
