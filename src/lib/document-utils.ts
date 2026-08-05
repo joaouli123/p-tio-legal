@@ -959,29 +959,29 @@ async function createGenericPdfBlob(doc: ExportableDocument) {
     doc.footer.filter(Boolean).forEach((line) => drawParagraph(line, 9.5, 4));
   }
 
-  ensureSpace(signatureData ? 170 : 72);
+  const genericSignatureWidth = Math.min(74, contentWidth);
+  const genericSignatureHeight = genericSignatureWidth * (9 / 16);
+  ensureSpace(signatureData ? genericSignatureHeight + 44 : 72);
   pdf.setDrawColor(221, 213, 197);
   pdf.line(margin, y, pageWidth - margin, y);
   y += 12;
   if (signatureData) {
-    const signatureWidth = Math.min(220, contentWidth);
-    const signatureHeight = signatureWidth * (9 / 16);
     pdf.addImage(
       signatureData,
       inferImageFormat(signatureData),
-      pageWidth - margin - signatureWidth,
+      margin,
       y,
-      signatureWidth,
-      signatureHeight,
+      genericSignatureWidth,
+      genericSignatureHeight,
     );
-    y += signatureHeight + 4;
+    y += genericSignatureHeight + 4;
   }
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9.5);
-  pdf.text("Jardel F. Pinto", pageWidth - margin - 110, y, { align: "center" });
+  pdf.text("Jardel F. Pinto", margin + (genericSignatureWidth / 2), y, { align: "center" });
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8.5);
-  pdf.text("Representante Técnico Nomeado", pageWidth - margin - 110, y + 12, { align: "center" });
+  pdf.text("Representante Técnico Nomeado", margin + (genericSignatureWidth / 2), y + 12, { align: "center" });
 
   return pdf.output("blob");
 }
@@ -1005,8 +1005,8 @@ function buildDefaultMarkup(doc: ExportableDocument) {
       h2 { font-size: 14px; margin: 22px 0 8px; text-transform: uppercase; letter-spacing: 0.08em; }
       p { font-size: 12px; line-height: 1.65; margin: 0 0 10px; text-align: justify; }
       .footer { margin-top: 28px; }
-      .signature-area { margin-top: 30px; page-break-inside: avoid; text-align: center; }
-      .signature-image { width: 260px; height: auto; max-height: 146px; object-fit: contain; display: block; margin: 0 auto 4px; }
+      .signature-area { margin-top: 30px; page-break-inside: avoid; text-align: left; }
+      .signature-image { width: 87px; height: auto; max-height: 49px; object-fit: contain; display: block; margin: 0 0 4px; }
       .signature-name { font-weight: bold; }
     </style>
     <div class="doc-root">
@@ -1062,9 +1062,9 @@ function buildLaudoNarrativoMarkup(doc: ExportableDocument) {
       .qr-text { font-size: 10pt; line-height: 1.5; word-break: break-all; }
       .signature-area { margin-top: 40px; }
       .city-date { font-size: 11pt; margin-bottom: 50px; }
-      .signature-block { display: flex; justify-content: flex-end; }
-      .signature-line { text-align: center; width: 300px; padding-top: 6px; font-size: 11pt; }
-      .signature-image { display: block; width: 300px; height: auto; max-height: 169px; object-fit: contain; margin-bottom: 4px; }
+      .signature-block { display: flex; justify-content: flex-start; }
+      .signature-line { text-align: left; width: 100px; padding-top: 6px; font-size: 11pt; }
+      .signature-image { display: block; width: 100px; height: auto; max-height: 56px; object-fit: contain; margin: 0 0 4px; }
       .signature-name { font-weight: bold; }
       .photos-section { margin-top: 20px; }
       .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
@@ -1202,9 +1202,9 @@ function buildLaudoMarkup(doc: ExportableDocument) {
       .qr-text { font-size: 10pt; line-height: 1.5; word-break: break-all; }
       .signature-area { margin-top: 40px; }
       .city-date { font-size: 11pt; margin-bottom: 50px; }
-      .signature-block { display: flex; justify-content: flex-end; }
-      .signature-line { text-align: center; width: 300px; padding-top: 6px; font-size: 11pt; }
-      .signature-image { display: block; width: 300px; height: auto; max-height: 169px; object-fit: contain; margin-bottom: 4px; }
+      .signature-block { display: flex; justify-content: flex-start; }
+      .signature-line { text-align: left; width: 100px; padding-top: 6px; font-size: 11pt; }
+      .signature-image { display: block; width: 100px; height: auto; max-height: 56px; object-fit: contain; margin: 0 0 4px; }
       .signature-name { font-weight: bold; }
       .photos-section { margin-top: 20px; }
       .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
@@ -1338,8 +1338,8 @@ function buildReportMarkup(doc: ExportableDocument) {
       .data-table td { border: 1px solid #ddd5c5; padding: 5px 8px; font-size: 11px; color: #243549; }
       .data-table tr:nth-child(even) td { background: #f9f8f5; }
       .footer { margin-top: 20px; color: #5b6676; font-size: 11px; }
-      .signature-area { margin-top: 28px; padding-top: 14px; border-top: 1px solid #ddd5c5; text-align: center; page-break-inside: avoid; }
-      .signature-image { width: 260px; height: auto; max-height: 146px; object-fit: contain; display: block; margin: 0 auto 4px; }
+      .signature-area { margin-top: 28px; padding-top: 14px; border-top: 1px solid #ddd5c5; text-align: left; page-break-inside: avoid; }
+      .signature-image { width: 87px; height: auto; max-height: 49px; object-fit: contain; display: block; margin: 0 0 4px; }
       .signature-name { font-weight: 700; color: #10243e; }
       @media print {
         .doc-root { padding: 0; }

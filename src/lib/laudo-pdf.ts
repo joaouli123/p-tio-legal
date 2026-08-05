@@ -105,21 +105,21 @@ export async function createLaudoPdfBlob(doc: LaudoPdfData) {
   };
 
   const drawSignature = () => {
-    const boxWidth = Math.min(contentWidth, 480);
-    const boxHeight = 260;
+    const boxWidth = Math.min(contentWidth, 160);
+    const boxHeight = 87;
     ensureSpace(signatureData && signatureDimensions ? boxHeight + 20 : 140);
     if (signatureData && signatureDimensions) {
       const fitted = fitImageIntoBox(signatureDimensions, boxWidth, boxHeight);
-      const x = margin + (contentWidth - boxWidth) / 2;
+      const x = margin;
       pdf.addImage(signatureData, inferImageFormat(signatureData), x + fitted.offsetX, y + fitted.offsetY, fitted.width, fitted.height);
       y += boxHeight + 12;
       return;
     }
 
     pdf.setDrawColor(0, 0, 0);
-    pdf.line(pageWidth - 250, y, pageWidth - 40, y);
+    pdf.line(margin, y, margin + 160, y);
     pdf.setFont("helvetica", "bold");
-    pdf.text("Jardel F. Pinto", pageWidth - 145, y + 18, { align: "center" });
+    pdf.text("Jardel F. Pinto", margin + 80, y + 18, { align: "center" });
     pdf.setFont("helvetica", "normal");
     pdf.text("Representante Técnico Nomeado", pageWidth - 145, y + 34, { align: "center" });
     y += 46;

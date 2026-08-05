@@ -218,7 +218,7 @@ export function buildChecklistHtml(data: ChecklistPdfData): string {
   ].map((signature, index) => `
     <div class="sig-blk">
       ${index === 0 ? secHead(9, "ASSINATURAS") : '<div class="sec-head"><span class="sec-num">&nbsp;</span><span>&nbsp;</span></div>'}
-      <div class="sig-inner">
+      <div class="sig-inner${index === 0 ? " sig-signed" : ""}">
         ${index === 0
           ? `<img class="sig-image" src="${escapeHtml(signatureSrc)}" alt="Assinatura de Jardel Francisco Pinto" />`
           : '<div class="sig-area"></div>'}
@@ -299,7 +299,9 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8px;color:#111;background:
 .sig-blk{border:1.5px solid #1A3560;overflow:hidden;}
 .sig-inner{padding:5px 7px;}
 .sig-area{height:30px;border-bottom:1px solid #444;margin:6px 0 3px;}
-.sig-image{display:block;width:100%;height:auto;max-height:56px;object-fit:contain;margin:0 auto 2px;}
+.sig-signed{text-align:left;}
+.sig-signed .sig-name,.sig-signed .sig-role{text-align:left;}
+.sig-image{display:block;width:33.333%;height:auto;max-height:19px;object-fit:contain;margin:0 0 2px;}
 .sig-name{font-size:7.5px;font-weight:bold;text-align:center;}
 .sig-role{font-size:6.5px;color:#555;text-align:center;}
 .val-row{display:grid;grid-template-columns:1fr auto;gap:2px;margin-bottom:2px;}

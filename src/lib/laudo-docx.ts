@@ -236,12 +236,12 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
   const buildSignatureBlock = (): Paragraph[] => {
     const signatureParagraph = signatureData && signatureDimensions
       ? new Paragraph({
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
           spacing: { before: 120, after: 120 },
-          children: [new ImageRun({ data: signatureData, type: "jpg", transformation: fitImageIntoBox(signatureDimensions, 520, 260) })],
+          children: [new ImageRun({ data: signatureData, type: "jpg", transformation: fitImageIntoBox(signatureDimensions, 173, 87) })],
         })
       : new Paragraph({
-          alignment: AlignmentType.CENTER,
+          alignment: AlignmentType.LEFT,
           border: { top: { color: "000000", style: BorderStyle.SINGLE, size: 4 } },
           children: [
             new TextRun({ text: "Jardel F. Pinto", bold: true, size: 24 }),
