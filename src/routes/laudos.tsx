@@ -15,7 +15,11 @@ export const Route = createFileRoute("/laudos")({
   head: () => ({ meta: [{ title: "Laudos - Patio Legal" }] }),
 });
 
-const FOTO_TIPOS = ["destruicao_antes", "destruicao_depois", "destruicao_extra", "frente", "traseira", "lateral_esquerda", "interior", "chegada"];
+const FOTO_TIPOS = [
+  "destruicao_antes", "destruicao_durante", "destruicao_depois", "destruicao_extra",
+  "destruicao", "vistoria", "frente", "traseira", "lateral_esquerda", "lateral_direita",
+  "interior", "chegada", "outros",
+];
 
 function LaudosPage() {
   const [laudos, setLaudos] = useState<any[]>([]);

@@ -742,7 +742,17 @@ function VeiculosPage() {
                   >
                     <td className="px-5 py-3">
                       <div className="space-y-1">
-                        <p className="font-mono font-bold text-gold">{v.placa}</p>
+                        <button
+                          type="button"
+                          className="font-mono font-bold text-gold underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 rounded-sm"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void navigate({ to: "/veiculos/$id", params: { id: v.id } });
+                          }}
+                          aria-label={`Abrir ficha do veículo ${v.placa}`}
+                        >
+                          {v.placa}
+                        </button>
                         {plateStatus !== 'regular' && (
                           <div className="flex flex-wrap items-center gap-2">
                             <PlateStatusBadge status={plateStatus} compact />

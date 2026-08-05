@@ -52,7 +52,7 @@ function DestruicaoPage() {
 
   useEffect(() => {
     Promise.all([
-      getVeiculos("em_analise"),
+      getVeiculos(),
       getDestruicoes(),
     ]).then(([v, d]) => {
       setVeiculos(v);
@@ -60,7 +60,8 @@ function DestruicaoPage() {
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
-  const selected = veiculos.find(v => v.id === selectedId) ?? destruicoes.find((item: any) => item.veiculo_id === selectedId)?.veiculos;
+  const selectedDestruction = destruicoes.find((item: any) => item.veiculo_id === selectedId);
+  const selected = veiculos.find(v => v.id === selectedId) ?? selectedDestruction?.veiculos;
   const allDone = steps.foto_antes.done && steps.foto_depois.done;
 
   const laudoDocument = useMemo(() => {
@@ -272,6 +273,8 @@ function DestruicaoPage() {
         .from("destruicoes")
         .select("id")
         .eq("veiculo_id", selectedId)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       if (lookupError) throw lookupError;
 
@@ -291,6 +294,7 @@ function DestruicaoPage() {
       }
 
       setSuccess("Rascunho salvo. As fotos continuam editáveis até a finalização definitiva.");
+      await updateVeiculo(selectedId, { status: "em_analise" as any });
       if (typeof window !== "undefined") {
         window.localStorage.setItem(`patio-legal:laudo-draft:${selectedId}`, JSON.stringify({
           laudoNumber,
@@ -318,6 +322,8 @@ function DestruicaoPage() {
         .from("destruicoes")
         .select("id")
         .eq("veiculo_id", selectedId)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       let destruicaoId = existingDestruicao?.id;
@@ -345,6 +351,8 @@ function DestruicaoPage() {
         .from("laudos")
         .select("id")
         .eq("veiculo_id", selectedId)
+        .order("emitido_em", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (!existingLaudo?.id) {
@@ -373,7 +381,7 @@ function DestruicaoPage() {
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(`patio-legal:laudo-draft:${selectedId}`);
       }
-      const [v, d] = await Promise.all([getVeiculos("em_analise"), getDestruicoes()]);
+      const [v, d] = await Promise.all([getVeiculos(), getDestruicoes()]);
       setVeiculos(v);
       setDestruicoes(d);
       setLaudoOpen(true);
@@ -430,7 +438,7 @@ function DestruicaoPage() {
                     <SelectValue placeholder="Selecione o veículo…" />
                   </SelectTrigger>
                   <SelectContent>
-                    {veiculos.map(v => (
+                    {veiculos.filter((v) => v.status === "em_analise").map(v => (
                       <SelectItem key={v.id} value={v.id}>
                         {v.placa} — {v.marca_modelo}
                       </SelectItem>
@@ -576,7 +584,12 @@ function DestruicaoPage() {
                   </thead>
                   <tbody>
                     {destruicoes.map((d: any) => (
-                      <tr key={d.id} className="border-t border-border hover:bg-muted/20 transition-colors">
+                      <tr
+                        key={d.id}
+                        className="border-t border-border hover:bg-muted/20 transition-colors cursor-pointer"
+                        onClick={() => d.veiculo_id && setSelectedId(d.veiculo_id)}
+                        title="Clique para abrir e editar as fotos desta destruição"
+                      >
                         <td className="px-5 py-3 font-mono font-bold text-gold">{d.veiculos?.placa ?? "—"}</td>
                         <td className="px-5 py-3">{d.veiculos?.marca_modelo ?? "—"}</td>
                         <td className="px-5 py-3 text-muted-foreground">{d.metodo}</td>
