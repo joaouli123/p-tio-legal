@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import { buildManagementReportDocument, downloadPdfDocument, downloadWordDocument, shareDocumentViaWhatsApp } from "@/lib/document-utils";
+import { buildManagementReportDocument, buildVehicleSummaryDocument, downloadPdfDocument, downloadWordDocument, shareDocumentViaWhatsApp } from "@/lib/document-utils";
+import { DocumentPreview } from "@/components/DocumentPreview";
 import { getServicoStats, getVeiculoStats, getVeiculos, getLaudos, type ServicoStats, type Veiculo } from "@/lib/db";
 import { FilePenLine, FileText, MessageCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -83,10 +84,12 @@ function formatBRL(value: number) {
 }
 
 function RelatoriosPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [stats, setStats] = useState({ no_patio: 0, em_analise: 0, destruido: 0, restituido: 0, leilao: 0, doacao: 0, aguardando: 0, total: 0 });
   const [laudos, setLaudos] = useState<{ numero: string; placa: string; emitido_em: string }[]>([]);
+  const [selectedVehicle, setSelectedVehicle] = useState<Veiculo | null>(null);
   const [servicoStats, setServicoStats] = useState<ServicoStats>({
     totalServicos: 0,
     totalCobrado: 0,
@@ -158,6 +161,7 @@ function RelatoriosPage() {
     vehicleList: veiculos,
     laudosList: laudos,
   });
+  const selectedVehicleDocument = selectedVehicle ? buildVehicleSummaryDocument({ veiculo: selectedVehicle }) : null;
 
   return (
     <>
@@ -269,6 +273,39 @@ function RelatoriosPage() {
                   <li className="text-muted-foreground">Nenhuma cobrança registrada no período.</li>
                 )}
               </ul>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.8fr)] gap-4">
+            <div className="rounded-xl bg-gradient-card border border-border shadow-elegant overflow-hidden">
+              <div className="p-5 border-b border-border">
+                <h3 className="font-semibold text-lg">Relatórios por veículo</h3>
+                <p className="text-xs text-muted-foreground">Clique na placa ou no processo para abrir o cadastro completo.</p>
+              </div>
+              <div className="divide-y divide-border">
+                {veiculos.map((veiculo) => (
+                  <div key={veiculo.id} className="flex flex-wrap items-center gap-3 px-5 py-3 hover:bg-muted/20 transition-colors">
+                    <button type="button" className="font-mono font-bold text-gold hover:underline" onClick={() => { setSelectedVehicle(veiculo); }}>{veiculo.placa}</button>
+                    <span className="text-sm text-muted-foreground flex-1 min-w-44">{veiculo.marca_modelo}</span>
+                    <button type="button" className="text-sm font-mono text-muted-foreground hover:text-gold hover:underline" onClick={() => { setSelectedVehicle(veiculo); }}>{veiculo.processo ?? "Sem processo"}</button>
+                    <Button variant="outline" size="sm" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: veiculo.id }, search: { status: "todos", q: "", openNew: false } })}>Cadastro completo</Button>
+                    <Button variant="ghost" size="sm" onClick={() => void downloadPdfDocument(buildVehicleSummaryDocument({ veiculo }))}>PDF</Button>
+                  </div>
+                ))}
+                {veiculos.length === 0 && <p className="p-5 text-sm text-muted-foreground">Nenhum veículo encontrado.</p>}
+              </div>
+            </div>
+            <div className="rounded-xl bg-gradient-card border border-gold/30 p-5 shadow-glow h-fit">
+              {selectedVehicleDocument ? (
+                <>
+                  <h3 className="font-semibold mb-3">Relatório completo</h3>
+                  <DocumentPreview document={selectedVehicleDocument} />
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button variant="outline" size="sm" onClick={() => void downloadWordDocument(selectedVehicleDocument)}>Word</Button>
+                    <Button size="sm" onClick={() => void downloadPdfDocument(selectedVehicleDocument)}>PDF</Button>
+                  </div>
+                </>
+              ) : <p className="text-sm text-muted-foreground">Selecione uma placa ou processo para visualizar o relatório completo.</p>}
             </div>
           </div>
         </>

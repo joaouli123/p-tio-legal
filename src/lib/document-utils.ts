@@ -1027,7 +1027,7 @@ function buildLaudoNarrativoMarkup(doc: ExportableDocument) {
       .photos-section { margin-top: 20px; }
       .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
       .photo-item { text-align: center; }
-      .photo-item img { width: 100%; max-height: 200px; object-fit: cover; border: 1px solid #aaaaaa; border-radius: 4px; }
+      .photo-item img { width: 100%; height: auto; max-height: 220px; object-fit: contain; object-position: center; display: block; background: #f8fafc; border: 1px solid #aaaaaa; border-radius: 4px; }
       .photo-caption { font-size: 9.5pt; color: #444444; margin-top: 4px; font-style: italic; }
       @media print { body { background: #fff; } .laudo-doc { padding: 0; } }
     </style>
@@ -1165,7 +1165,7 @@ function buildLaudoMarkup(doc: ExportableDocument) {
       .photos-section { margin-top: 20px; }
       .photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
       .photo-item { text-align: center; }
-      .photo-item img { width: 100%; max-height: 200px; object-fit: cover; border: 1px solid #aaaaaa; border-radius: 4px; }
+      .photo-item img { width: 100%; height: auto; max-height: 220px; object-fit: contain; object-position: center; display: block; background: #f8fafc; border: 1px solid #aaaaaa; border-radius: 4px; }
       .photo-caption { font-size: 9.5pt; color: #444444; margin-top: 4px; font-style: italic; }
       @media print { body { background: #fff; } .laudo-doc { padding: 0; } }
     </style>

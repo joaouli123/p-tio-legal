@@ -24,6 +24,7 @@ import { buildListExportDocument, buildVehicleSummaryDocument, downloadPdfDocume
 import { MISSING_PLATE_VALUE, PLATE_STATUS_LABELS, SUPPRESSED_CHASSIS_VALUE, isMissingPlateValue, isSuppressedChassisValue, resolvePlateStatus, type PlateStatus } from "@/lib/plate-status";
 import { supabase } from "@/lib/supabase";
 import { prepareImageForUpload } from "@/lib/image-upload";
+import { getSignedPhotoUrl } from "@/lib/storage";
 
 const VEHICLE_ROUTE_FILTERS = ["todos", "no_patio", "em_analise", "destruido", "restituido", "leilao", "doacao", "aguardando"] as const;
 
@@ -519,16 +520,10 @@ function VeiculosPage() {
     void navigate({
       to: "/veiculos",
       replace: true,
-      search: (prev) => {
-        const mergedStatus = nextSearch.status ?? prev.status ?? "todos";
-        const mergedQuery = nextSearch.q ?? prev.q ?? "";
-        const mergedOpenNew = nextSearch.openNew ?? prev.openNew ?? false;
-
-        return {
-          status: mergedStatus === "todos" ? undefined : mergedStatus,
-          q: mergedQuery || undefined,
-          openNew: mergedOpenNew || undefined,
-        };
+      search: {
+        status: nextSearch.status ?? filter,
+        q: nextSearch.q ?? query,
+        openNew: nextSearch.openNew ?? showForm,
       },
     });
   };
@@ -569,11 +564,11 @@ function VeiculosPage() {
 
       if (uploadError) throw uploadError;
 
-      const { data: publicData } = supabase.storage.from('fotos-veiculos').getPublicUrl(storagePath);
+      const signedUrl = await getSignedPhotoUrl(storagePath);
       const { error: insertError } = await supabase.from('fotos').insert({
         veiculo_id: photoTarget.id,
         storage_path: storagePath,
-        url: publicData.publicUrl,
+        url: signedUrl,
         tipo: 'chegada',
         label: file.name,
       });
@@ -739,7 +734,12 @@ function VeiculosPage() {
                   const plateStatus = resolvePlateStatus(v);
 
                   return (
-                  <tr key={v.id} className="border-t border-border hover:bg-muted/20 transition-colors">
+                  <tr
+                    key={v.id}
+                    className="border-t border-border hover:bg-muted/20 transition-colors cursor-pointer"
+                    onClick={() => navigate({ to: "/veiculos/$id", params: { id: v.id }, search: { status: "todos", q: "", openNew: false } })}
+                    title="Clique para abrir o cadastro completo do veículo"
+                  >
                     <td className="px-5 py-3">
                       <div className="space-y-1">
                         <p className="font-mono font-bold text-gold">{v.placa}</p>
@@ -762,9 +762,9 @@ function VeiculosPage() {
                     <td className="px-5 py-3">
                       <StatusBadge status={v.status as any} />
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-3" onClick={(event) => event.stopPropagation()}>
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-gold" title="Ver detalhes" onClick={() => navigate({ to: "/veiculos/$id", params: { id: v.id } })}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-gold" title="Ver detalhes" onClick={() => navigate({ to: "/veiculos/$id", params: { id: v.id }, search: { status: "todos", q: "", openNew: false } })}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         <DropdownMenu>
@@ -780,7 +780,7 @@ function VeiculosPage() {
                             <DropdownMenuItem onClick={() => startPhotoUpload(v, 'gallery')}>
                               <ImagePlus className="h-4 w-4" /> Escolher arquivo / galeria
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate({ to: "/veiculos/$id", params: { id: v.id } })}>
+                            <DropdownMenuItem onClick={() => navigate({ to: "/veiculos/$id", params: { id: v.id }, search: { status: "todos", q: "", openNew: false } })}>
                               <Upload className="h-4 w-4" /> Abrir ficha do veículo
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -802,7 +802,7 @@ function VeiculosPage() {
                               <FilePenLine className="h-4 w-4" /> Abrir cadastro no Word
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => navigate({ to: "/veiculos/$id", params: { id: v.id } })}>
+                            <DropdownMenuItem onClick={() => navigate({ to: "/veiculos/$id", params: { id: v.id }, search: { status: "todos", q: "", openNew: false } })}>
                               <Eye className="h-4 w-4" /> Ver detalhes completos
                             </DropdownMenuItem>
                           </DropdownMenuContent>

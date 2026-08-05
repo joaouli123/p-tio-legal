@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Boxes, FileText, Clock, Loader2, Save } from "lucide-react";
 import {
   getObjeto,
@@ -37,10 +39,12 @@ function ObjetoDetailPage() {
   const [saving, setSaving] = useState(false);
   const [newStatus, setNewStatus] = useState<ObjetoStatus | "">("");
   const [saved, setSaved] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Partial<Objeto>>({});
 
   useEffect(() => {
     Promise.all([getObjeto(id), getHistoricoObjeto(id)])
-      .then(([o, h]) => { setObjeto(o); setNewStatus(o.status); setHistorico(h); })
+      .then(([o, h]) => { setObjeto(o); setNewStatus(o.status); setDraft(o); setHistorico(h); })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [id]);
@@ -70,6 +74,52 @@ function ObjetoDetailPage() {
     }
   };
 
+  const updateDraft = <K extends keyof Objeto>(key: K, value: Objeto[K]) => {
+    setDraft((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleSaveDetails = async () => {
+    if (!objeto) return;
+    setSaving(true);
+    try {
+      const updated = await updateObjeto(id, {
+        tipo: (draft.tipo ?? objeto.tipo) as Objeto["tipo"],
+        descricao: draft.descricao?.trim() || objeto.descricao,
+        marca_modelo: draft.marca_modelo?.trim() || undefined,
+        numero_serie: draft.numero_serie?.trim() || undefined,
+        quantidade: Number(draft.quantidade) > 0 ? Number(draft.quantidade) : objeto.quantidade,
+        unidade: draft.unidade?.trim() || objeto.unidade,
+        origem: draft.origem?.trim() || undefined,
+        situacao: draft.situacao?.trim() || undefined,
+        status: (draft.status ?? objeto.status) as ObjetoStatus,
+        delegacia_nome: draft.delegacia_nome?.trim() || undefined,
+        processo: draft.processo?.trim() || undefined,
+        setor: draft.setor?.trim() || undefined,
+        local_vaga: draft.local_vaga?.trim() || undefined,
+        observacoes: draft.observacoes?.trim() || undefined,
+      });
+      const { data: { user } } = await supabase.auth.getUser();
+      await addHistoricoObjeto({
+        objeto_id: id,
+        tipo: "sistema",
+        titulo: "Cadastro do objeto atualizado",
+        detalhe: `Descrição: ${updated.descricao}; status: ${objeto.status} → ${updated.status}`,
+        usuario_nome: user?.email ?? "Sistema",
+      });
+      setObjeto(updated);
+      setDraft(updated);
+      setNewStatus(updated.status);
+      setHistorico(await getHistoricoObjeto(id));
+      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32 gap-3 text-muted-foreground">
@@ -84,7 +134,7 @@ function ObjetoDetailPage() {
       <div className="flex flex-col items-center justify-center py-32 gap-4 text-muted-foreground">
         <Boxes className="h-16 w-16 opacity-30" />
         <p className="font-medium text-lg">Objeto não encontrado</p>
-        <Button variant="outline" onClick={() => navigate({ to: "/objetos" })}>
+        <Button variant="outline" onClick={() => navigate({ to: "/objetos", search: { status: "todos", q: "", openNew: false } })}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
         </Button>
       </div>
@@ -94,7 +144,7 @@ function ObjetoDetailPage() {
   return (
     <>
       <div className="flex items-center gap-3 mb-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/objetos" })} className="gap-2 text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/objetos", search: { status: "todos", q: "", openNew: false } })} className="gap-2 text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Objetos
         </Button>
       </div>
@@ -149,7 +199,35 @@ function ObjetoDetailPage() {
             </div>
 
             <div className="rounded-xl bg-gradient-card border border-border p-6 shadow-elegant space-y-4">
-              <h3 className="font-semibold text-lg">Alterar status</h3>
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-semibold text-lg">Cadastro completo</h3>
+                <Button type="button" variant="outline" size="sm" onClick={() => { setEditing((value) => !value); setDraft(objeto); }}>
+                  {editing ? "Cancelar" : "Editar cadastro"}
+                </Button>
+              </div>
+              {editing ? (
+                <div className="space-y-4">
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="space-y-1"><Label>Descrição</Label><Input value={draft.descricao ?? ""} onChange={(event) => updateDraft("descricao", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Tipo</Label><Select value={draft.tipo ?? objeto.tipo} onValueChange={(value) => updateDraft("tipo", value as Objeto["tipo"])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="caca_niquel">Máquina caça-níquel</SelectItem><SelectItem value="outro">Outro objeto</SelectItem></SelectContent></Select></div>
+                    <div className="space-y-1"><Label>Marca / Modelo</Label><Input value={draft.marca_modelo ?? ""} onChange={(event) => updateDraft("marca_modelo", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Nº de série</Label><Input value={draft.numero_serie ?? ""} onChange={(event) => updateDraft("numero_serie", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Quantidade</Label><Input type="number" min="1" value={draft.quantidade ?? 1} onChange={(event) => updateDraft("quantidade", Number(event.target.value))} /></div>
+                    <div className="space-y-1"><Label>Unidade</Label><Input value={draft.unidade ?? "unidade"} onChange={(event) => updateDraft("unidade", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Origem</Label><Input value={draft.origem ?? ""} onChange={(event) => updateDraft("origem", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Situação</Label><Input value={draft.situacao ?? ""} onChange={(event) => updateDraft("situacao", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Status</Label><Select value={draft.status ?? objeto.status} onValueChange={(value) => updateDraft("status", value as ObjetoStatus)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="apreendido">Apreendido</SelectItem><SelectItem value="em_analise">Em análise</SelectItem><SelectItem value="aguardando">Aguardando</SelectItem><SelectItem value="destruido">Destruído</SelectItem><SelectItem value="restituido">Restituído</SelectItem></SelectContent></Select></div>
+                    <div className="space-y-1"><Label>Delegacia de origem</Label><Input value={draft.delegacia_nome ?? ""} onChange={(event) => updateDraft("delegacia_nome", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Processo / Inquérito</Label><Input value={draft.processo ?? ""} onChange={(event) => updateDraft("processo", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Setor</Label><Input value={draft.setor ?? ""} onChange={(event) => updateDraft("setor", event.target.value)} /></div>
+                    <div className="space-y-1"><Label>Vaga / local</Label><Input value={draft.local_vaga ?? ""} onChange={(event) => updateDraft("local_vaga", event.target.value)} /></div>
+                  </div>
+                  <div className="space-y-1"><Label>Observações</Label><Textarea rows={3} value={draft.observacoes ?? ""} onChange={(event) => updateDraft("observacoes", event.target.value)} /></div>
+                  <Button type="button" onClick={() => void handleSaveDetails()} disabled={saving} className="w-full gap-2 bg-gradient-gold text-primary-foreground hover:opacity-90 shadow-gold">
+                    {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Salvando…</> : <><Save className="h-4 w-4" /> Salvar cadastro completo</>}
+                  </Button>
+                </div>
+              ) : (
               <div className="space-y-3">
                 <div className="space-y-1">
                   <Label>Status atual</Label>
@@ -174,6 +252,7 @@ function ObjetoDetailPage() {
                    <><Save className="h-4 w-4" /> Salvar alteração</>}
                 </Button>
               </div>
+              )}
               <div className="pt-4 border-t border-border space-y-2 text-sm">
                 <div>
                   <p className="text-xs text-muted-foreground">Entrada no sistema</p>

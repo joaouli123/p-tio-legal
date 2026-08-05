@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import logoMaringaSat from "@/assets/logo-maringa-sat.jpg";
+import signatureImage from "@/assets/assianturaa.jpeg";
 
 interface LaudoFoto {
   url: string;
@@ -67,12 +68,18 @@ export async function createLaudoPdfBlob(doc: LaudoPdfData) {
   const logoUrl = typeof window !== "undefined"
     ? new URL(logoMaringaSat as string, window.location.href).href
     : (logoMaringaSat as string);
+  const signatureUrl = typeof window !== "undefined"
+    ? new URL(signatureImage as string, window.location.href).href
+    : (signatureImage as string);
 
-  const [logoData, qrData, photoData] = await Promise.all([
+  const [logoData, qrData, photoData, signatureData] = await Promise.all([
     fetchImageDataUrl(logoUrl),
     fetchImageDataUrl(getField(doc, "qrCodeUrl", "")),
     Promise.all((doc.fotos ?? []).map((foto) => fetchImageDataUrl(foto.url))),
+    fetchImageDataUrl(signatureUrl),
   ]);
+  const photoDimensions = await Promise.all(photoData.map((image) => image ? getImageDimensions(image) : Promise.resolve(null)));
+  const signatureDimensions = signatureData ? await getImageDimensions(signatureData) : null;
 
   const ensureSpace = (height: number) => {
     if (y + height <= pageHeight - margin) return;
@@ -95,6 +102,27 @@ export async function createLaudoPdfBlob(doc: LaudoPdfData) {
     const offset = pdf.getTextWidth(label) + 4;
     pdf.setFont("helvetica", "normal");
     pdf.text(value, x + offset, y);
+  };
+
+  const drawSignature = () => {
+    const boxWidth = Math.min(contentWidth, 480);
+    const boxHeight = 260;
+    ensureSpace(signatureData && signatureDimensions ? boxHeight + 20 : 140);
+    if (signatureData && signatureDimensions) {
+      const fitted = fitImageIntoBox(signatureDimensions, boxWidth, boxHeight);
+      const x = margin + (contentWidth - boxWidth) / 2;
+      pdf.addImage(signatureData, inferImageFormat(signatureData), x + fitted.offsetX, y + fitted.offsetY, fitted.width, fitted.height);
+      y += boxHeight + 12;
+      return;
+    }
+
+    pdf.setDrawColor(0, 0, 0);
+    pdf.line(pageWidth - 250, y, pageWidth - 40, y);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Jardel F. Pinto", pageWidth - 145, y + 18, { align: "center" });
+    pdf.setFont("helvetica", "normal");
+    pdf.text("Representante Técnico Nomeado", pageWidth - 145, y + 34, { align: "center" });
+    y += 46;
   };
 
   if (logoData) {
@@ -238,7 +266,9 @@ export async function createLaudoPdfBlob(doc: LaudoPdfData) {
         const image = photoData[index];
 
         if (image) {
-          pdf.addImage(image, inferImageFormat(image), x, y, photoWidth, photoHeight);
+          const dimensions = photoDimensions[index] ?? { width: 3, height: 2 };
+          const fitted = fitImageIntoBox(dimensions, photoWidth, photoHeight);
+          pdf.addImage(image, inferImageFormat(image), x + fitted.offsetX, y + fitted.offsetY, fitted.width, fitted.height);
           pdf.setDrawColor(170, 170, 170);
           pdf.rect(x, y, photoWidth, photoHeight);
         } else {
@@ -262,17 +292,12 @@ export async function createLaudoPdfBlob(doc: LaudoPdfData) {
       y += 12;
     }
 
-    ensureSpace(140);
+    ensureSpace(signatureData ? 320 : 140);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(11);
     pdf.text(`Maringá/PR, ${getField(doc, "destructionDateLong")}.`, margin, y + 8);
-    y += 74;
-    pdf.setDrawColor(0, 0, 0);
-    pdf.line(pageWidth - 250, y, pageWidth - 40, y);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("Jardel F. Pinto", pageWidth - 145, y + 18, { align: "center" });
-    pdf.setFont("helvetica", "normal");
-    pdf.text("Representante Técnico Nomeado", pageWidth - 145, y + 34, { align: "center" });
+    y += 30;
+    drawSignature();
 
     return pdf.output("blob");
   }
@@ -415,7 +440,9 @@ export async function createLaudoPdfBlob(doc: LaudoPdfData) {
       const image = photoData[index];
 
       if (image) {
-        pdf.addImage(image, inferImageFormat(image), x, y, photoWidth, photoHeight);
+        const dimensions = photoDimensions[index] ?? { width: 3, height: 2 };
+        const fitted = fitImageIntoBox(dimensions, photoWidth, photoHeight);
+        pdf.addImage(image, inferImageFormat(image), x + fitted.offsetX, y + fitted.offsetY, fitted.width, fitted.height);
         pdf.setDrawColor(170, 170, 170);
         pdf.rect(x, y, photoWidth, photoHeight);
       } else {
@@ -440,17 +467,34 @@ export async function createLaudoPdfBlob(doc: LaudoPdfData) {
     y += 12;
   }
 
-  ensureSpace(140);
+  ensureSpace(signatureData ? 320 : 140);
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(11);
   pdf.text(`Maringá/PR, ${getField(doc, "destructionDateLong")}.`, margin, y + 8);
-  y += 74;
-  pdf.setDrawColor(0, 0, 0);
-  pdf.line(pageWidth - 250, y, pageWidth - 40, y);
-  pdf.setFont("helvetica", "bold");
-  pdf.text("Jardel F. Pinto", pageWidth - 145, y + 18, { align: "center" });
-  pdf.setFont("helvetica", "normal");
-  pdf.text("Representante Técnico Nomeado", pageWidth - 145, y + 34, { align: "center" });
+  y += 30;
+  drawSignature();
 
   return pdf.output("blob");
+}
+
+type ImageDimensions = { width: number; height: number };
+
+async function getImageDimensions(dataUrl: string): Promise<ImageDimensions> {
+  try {
+    const image = new Image();
+    return await new Promise((resolve, reject) => {
+      image.onload = () => resolve({ width: image.naturalWidth || image.width, height: image.naturalHeight || image.height });
+      image.onerror = reject;
+      image.src = dataUrl;
+    });
+  } catch {
+    return { width: 3, height: 2 };
+  }
+}
+
+function fitImageIntoBox(dimensions: ImageDimensions, boxWidth: number, boxHeight: number) {
+  const scale = Math.min(boxWidth / dimensions.width, boxHeight / dimensions.height);
+  const width = dimensions.width * scale;
+  const height = dimensions.height * scale;
+  return { width, height, offsetX: (boxWidth - width) / 2, offsetY: (boxHeight - height) / 2 };
 }

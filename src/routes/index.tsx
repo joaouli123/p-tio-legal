@@ -32,7 +32,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { getServicoStats, getVeiculos, type ServicoStats, type Veiculo, type VehicleStatus } from "@/lib/db";
+import { getServicoStats, getVeiculoStats, getVeiculos, type ServicoStats, type Veiculo, type VehicleStatus } from "@/lib/db";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -75,15 +75,6 @@ const EMPTY_SERVICO_STATS: ServicoStats = {
   adimplenciaPercent: 0,
   tipos: [],
 };
-
-function deriveVehicleStats(veiculos: Veiculo[]) {
-  const stats = { ...EMPTY_STATS };
-  for (const v of veiculos) {
-    if (v.status in stats) stats[v.status] += 1;
-    stats.total += 1;
-  }
-  return stats;
-}
 
 // Real "entradas por dia" series for the last 30 days, derived from the loaded
 // vehicle list (created_at). Replaces the previous hardcoded mock series.
@@ -177,6 +168,7 @@ function KpiSkeleton() {
 function Dashboard() {
   const navigate = useNavigate();
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [vehicleStats, setVehicleStats] = useState(EMPTY_STATS);
   const [servicoStats, setServicoStats] = useState<ServicoStats>(EMPTY_SERVICO_STATS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,9 +176,16 @@ function Dashboard() {
   const load = () => {
     setLoading(true);
     setError(null);
-    Promise.all([getVeiculos(), getServicoStats()])
-      .then(([veiculosData, servicos]) => {
+    Promise.all([
+      // O dashboard só precisa dos registros recentes para atividade/gráfico.
+      // Os totais vêm de uma consulta agregada e não carregam toda a tabela.
+      getVeiculos(undefined, { limit: 500 }),
+      getVeiculoStats(),
+      getServicoStats(),
+    ])
+      .then(([veiculosData, statsData, servicos]) => {
         setVeiculos(veiculosData);
+        setVehicleStats(statsData);
         setServicoStats(servicos);
       })
       .catch((err: unknown) => {
@@ -200,7 +199,7 @@ function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const stats = useMemo(() => deriveVehicleStats(veiculos), [veiculos]);
+  const stats = vehicleStats;
   const recentVehicles = useMemo(() => veiculos.slice(0, 5), [veiculos]);
   const entriesSeries = useMemo(() => buildEntriesSeries(veiculos), [veiculos]);
   const recentActivity = useMemo(() => buildDashboardActivities(recentVehicles), [recentVehicles]);

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import checklistCarro from "@/assets/checklist-carro.png";
 import { PageHeader } from "@/components/PageHeader";
@@ -16,6 +16,7 @@ import {
 import { CHECKLIST_ITEMS, type ChecklistKey } from "@/lib/checklist-config";
 import { supabase } from "@/lib/supabase";
 import { printChecklist } from "@/lib/checklist-html";
+import { withSignedPhotoUrls } from "@/lib/storage";
 
 function parseChecklistSearch(search: Record<string, unknown>) {
   return {
@@ -86,6 +87,7 @@ const VEHICLE_CONDITION_LABELS: Record<Veiculo["situacao"], string> = {
 
 function ChecklistPage() {
   const { placa: placaParam, veiculo: veiculoParam } = Route.useSearch();
+  const navigate = useNavigate();
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -137,13 +139,14 @@ function ChecklistPage() {
       lateral_esquerda: "LATERAL ESQUERDA",
       interior: "INTERIOR",
     };
-    supabase
+    Promise.resolve(supabase
       .from("fotos")
-      .select("tipo, url")
-      .eq("veiculo_id", selected.id)
-      .then(({ data }) => {
+      .select("tipo, storage_path, url")
+      .eq("veiculo_id", selected.id))
+      .then(async ({ data }) => {
+        const photoRows = await withSignedPhotoUrls(data ?? []);
         setFotos(
-          (data ?? [])
+          photoRows
             .filter((f: Record<string, unknown>) => !!f.url)
             .map((f: Record<string, unknown>) => ({
               url: f.url as string,
@@ -260,6 +263,9 @@ function ChecklistPage() {
                   <span className="text-sm text-muted-foreground font-medium">
                     {completedCount}/{CHECKLIST_ITEMS.length} itens
                   </span>
+                  <Button variant="outline" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: selected.id }, search: { status: "todos", q: "", openNew: false } })} className="gap-2 border-border">
+                    Ver cadastro completo
+                  </Button>
                   <Button variant="outline" onClick={handlePrintChecklist} className="gap-2 border-border">
                     <Printer className="h-4 w-4" />
                     Exportar PDF

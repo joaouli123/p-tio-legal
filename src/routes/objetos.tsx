@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Download, Search, MoreVertical, Eye, FileText, Camera, Loader2, MessageCircle, FilePenLine, Upload, ImagePlus, Boxes, Flame, Check, AlertTriangle } from "lucide-react";
+import { Plus, Download, Search, MoreVertical, Eye, FileText, Camera, Loader2, MessageCircle, FilePenLine, Upload, ImagePlus, Boxes, Flame, Check, AlertTriangle, Save } from "lucide-react";
 import {
   getObjetos,
   createObjeto,
@@ -40,6 +40,7 @@ import {
 } from "@/lib/document-utils";
 import { supabase } from "@/lib/supabase";
 import { prepareImageForUpload } from "@/lib/image-upload";
+import { getSignedPhotoUrl, withSignedPhotoUrls } from "@/lib/storage";
 
 const OBJETO_ROUTE_FILTERS = ["todos", "apreendido", "em_analise", "aguardando", "destruido", "restituido"] as const;
 
@@ -250,8 +251,10 @@ const EMPTY_STEP: StepState = { done: false, fileName: "", publicUrl: "", storag
 function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto: Objeto | null; open: boolean; onClose: () => void; onFinalized: () => void }) {
   const [metodo, setMetodo] = useState("Trituração");
   const [steps, setSteps] = useState({ foto_antes: EMPTY_STEP, foto_depois: EMPTY_STEP });
+  const [reportPhotos, setReportPhotos] = useState<LaudoFoto[]>([]);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [laudoNumber, setLaudoNumber] = useState("");
@@ -259,31 +262,53 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
   const [processoNumber, setProcessoNumber] = useState("");
   const [laudoHash, setLaudoHash] = useState("");
   const inputRefs = useRef<Record<"foto_antes" | "foto_depois", HTMLInputElement | null>>({ foto_antes: null, foto_depois: null });
+  const galleryInputRefs = useRef<Record<"foto_antes" | "foto_depois", HTMLInputElement | null>>({ foto_antes: null, foto_depois: null });
+  const extraInputRef = useRef<HTMLInputElement | null>(null);
 
   const allDone = steps.foto_antes.done && steps.foto_depois.done;
 
   useEffect(() => {
     if (!open || !objeto) return;
+    const draftKey = `patio-legal:objeto-laudo-draft:${objeto.id}`;
+    let savedDraft: { laudoNumber?: string; oficioNumber?: string; processoNumber?: string; metodo?: string } = {};
+    if (typeof window !== "undefined") {
+      try {
+        savedDraft = JSON.parse(window.localStorage.getItem(draftKey) ?? "{}") as typeof savedDraft;
+      } catch {
+        savedDraft = {};
+      }
+    }
     setMetodo("Trituração");
     setError("");
     setSuccess("");
-    setLaudoNumber("");
-    setOficioNumber("");
-    setProcessoNumber(objeto.processo ?? "");
+    setMetodo(savedDraft.metodo || "Tritura\u00e7\u00e3o");
+    setLaudoNumber(savedDraft.laudoNumber || "");
+    setOficioNumber(savedDraft.oficioNumber || "");
+    setProcessoNumber(savedDraft.processoNumber || objeto.processo || "");
     setLaudoHash("");
     setSteps({ foto_antes: EMPTY_STEP, foto_depois: EMPTY_STEP });
+    setReportPhotos([]);
 
     supabase
       .from("fotos")
-      .select("tipo, storage_path, url")
+      .select("tipo, storage_path, url, label, created_at")
       .eq("objeto_id", objeto.id)
-      .then(({ data }) => {
+      .order("created_at", { ascending: true })
+      .then(async ({ data }) => {
+        const photoRows = await withSignedPhotoUrls(data ?? []);
         const next = { foto_antes: EMPTY_STEP, foto_depois: EMPTY_STEP };
-        (data ?? []).forEach((item: any) => {
+        photoRows.forEach((item: any) => {
           if (item.tipo === "destruicao_antes") next.foto_antes = { done: true, fileName: item.storage_path?.split("/").pop() ?? "Arquivo enviado", publicUrl: item.url ?? "", storagePath: item.storage_path ?? "" };
           if (item.tipo === "destruicao_depois") next.foto_depois = { done: true, fileName: item.storage_path?.split("/").pop() ?? "Arquivo enviado", publicUrl: item.url ?? "", storagePath: item.storage_path ?? "" };
         });
         setSteps(next);
+        const labelMap: Record<string, string> = {
+          chegada: "Foto do cadastro do objeto",
+          destruicao_extra: "Registro adicional da destruição",
+        };
+        setReportPhotos(photoRows
+          .filter((item: any) => item.url && !["destruicao_antes", "destruicao_depois"].includes(item.tipo))
+          .map((item: any) => ({ url: item.url, label: item.label || labelMap[item.tipo] || "Registro fotográfico" })));
       });
 
     supabase
@@ -303,6 +328,7 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
     if (!objeto) return null;
     const fotos: LaudoFoto[] = [];
     if (steps.foto_antes.publicUrl) fotos.push({ url: steps.foto_antes.publicUrl, label: "Objeto ANTES da destruição" });
+    fotos.push(...reportPhotos);
     if (steps.foto_depois.publicUrl) fotos.push({ url: steps.foto_depois.publicUrl, label: "Objeto DEPOIS da destruição" });
     return buildLaudoObjetoDocument({
       objeto,
@@ -314,7 +340,7 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
       fotos,
       hash: laudoHash || undefined,
     });
-  }, [objeto, laudoNumber, metodo, oficioNumber, processoNumber, steps.foto_antes.publicUrl, steps.foto_depois.publicUrl, laudoHash]);
+  }, [objeto, laudoNumber, metodo, oficioNumber, processoNumber, steps.foto_antes.publicUrl, steps.foto_depois.publicUrl, laudoHash, reportPhotos]);
 
   const persistStepFile = async (stepId: "foto_antes" | "foto_depois", file: File) => {
     if (!objeto) return;
@@ -322,6 +348,11 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
     setBusy(true);
     setError("");
     try {
+      const { data: previousRows } = await supabase
+        .from("fotos")
+        .select("id, storage_path")
+        .eq("objeto_id", objeto.id)
+        .eq("tipo", tipoMap[stepId]);
       const prepared = await prepareImageForUpload(file);
       const safeName = prepared.filename.replace(/\s+/g, "-");
       const storagePath = `${objeto.id}/destruicao/${stepId}_${Date.now()}_${safeName}`;
@@ -330,19 +361,54 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
         .upload(storagePath, prepared.blob, { upsert: true, contentType: prepared.contentType });
       if (uploadError) throw uploadError;
 
-      const { data: publicData } = supabase.storage.from("fotos-veiculos").getPublicUrl(storagePath);
+      const signedUrl = await getSignedPhotoUrl(storagePath);
       const { error: insertError } = await supabase.from("fotos").insert({
         objeto_id: objeto.id,
         storage_path: storagePath,
-        url: publicData.publicUrl,
+        url: signedUrl,
         tipo: tipoMap[stepId],
         label: file.name,
       });
       if (insertError) throw insertError;
 
-      setSteps((current) => ({ ...current, [stepId]: { done: true, fileName: file.name, publicUrl: publicData.publicUrl, storagePath } }));
+      const previousIds = (previousRows ?? []).map((row: { id: string }) => row.id);
+      if (previousIds.length > 0) {
+        const { error: cleanupError } = await supabase.from("fotos").delete().in("id", previousIds);
+        if (cleanupError) throw cleanupError;
+        const previousPaths = (previousRows ?? [])
+          .map((row: { storage_path?: string | null }) => row.storage_path)
+          .filter((path): path is string => !!path);
+        if (previousPaths.length > 0) await supabase.storage.from("fotos-veiculos").remove(previousPaths);
+      }
+
+      setSteps((current) => ({ ...current, [stepId]: { done: true, fileName: file.name, publicUrl: signedUrl ?? "", storagePath } }));
     } catch (uploadErr: any) {
       setError(uploadErr.message ?? "Não foi possível enviar o arquivo desta etapa.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const persistExtraFiles = async (files: File[]) => {
+    if (!objeto || files.length === 0) return;
+    setBusy(true);
+    setError("");
+    try {
+      const uploaded: LaudoFoto[] = [];
+      for (const file of files) {
+        const prepared = await prepareImageForUpload(file);
+        const safeName = prepared.filename.replace(/\s+/g, "-");
+        const storagePath = `${objeto.id}/destruicao/extra_${Date.now()}_${safeName}`;
+        const { error: uploadError } = await supabase.storage.from("fotos-veiculos").upload(storagePath, prepared.blob, { upsert: true, contentType: prepared.contentType });
+        if (uploadError) throw uploadError;
+        const signedUrl = await getSignedPhotoUrl(storagePath);
+        const { error: insertError } = await supabase.from("fotos").insert({ objeto_id: objeto.id, storage_path: storagePath, url: signedUrl, tipo: "destruicao_extra", label: file.name });
+        if (insertError) throw insertError;
+        if (signedUrl) uploaded.push({ url: signedUrl, label: file.name });
+      }
+      setReportPhotos((current) => [...current, ...uploaded]);
+    } catch (uploadErr: any) {
+      setError(uploadErr.message ?? "Não foi possível enviar as fotos adicionais.");
     } finally {
       setBusy(false);
     }
@@ -353,6 +419,60 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
     if (!file) return;
     await persistStepFile(stepId, file);
     event.target.value = "";
+  };
+
+  const handleExtraInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length > 0) await persistExtraFiles(files);
+    event.target.value = "";
+  };
+
+  const openStepPicker = (stepId: "foto_antes" | "foto_depois", mode: "camera" | "gallery" = "camera") => {
+    (mode === "camera" ? inputRefs : galleryInputRefs).current[stepId]?.click();
+  };
+
+  const handleSalvarRascunho = async () => {
+    if (!objeto) return;
+    setSavingDraft(true);
+    setError("");
+    setSuccess("");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: existingDestruicao, error: lookupError } = await supabase
+        .from("destruicoes")
+        .select("id")
+        .eq("objeto_id", objeto.id)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+
+      if (existingDestruicao?.id) {
+        const { error: updateError } = await supabase
+          .from("destruicoes")
+          .update({ metodo, operador_nome: user?.email ?? "Operador", finalizado: false, finalizado_em: null })
+          .eq("id", existingDestruicao.id);
+        if (updateError) throw updateError;
+      } else {
+        await createDestruicaoObjeto(objeto.id, {
+          metodo,
+          operador_nome: user?.email ?? "Operador",
+          finalizado: false,
+        });
+      }
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(`patio-legal:objeto-laudo-draft:${objeto.id}`, JSON.stringify({
+          laudoNumber,
+          oficioNumber,
+          processoNumber,
+          metodo,
+        }));
+      }
+      setSuccess("Rascunho salvo. As fotos continuam editáveis até a finalização definitiva.");
+    } catch (err: any) {
+      setError(err.message ?? "Não foi possível salvar o rascunho.");
+    } finally {
+      setSavingDraft(false);
+    }
   };
 
   const handleFinalizar = async () => {
@@ -429,6 +549,10 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
         setLaudoHash(hash);
       }
 
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(`patio-legal:objeto-laudo-draft:${objeto.id}`);
+      }
+
       await addHistoricoObjeto({
         objeto_id: objeto.id,
         tipo: "sistema",
@@ -500,6 +624,10 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
                   <p className="font-semibold text-sm">{s.label}</p>
                   {!s.done && <p className="text-[10px] text-gold mt-1">Clique para selecionar o arquivo</p>}
                   {s.helper && <p className="text-[10px] text-muted-foreground mt-1 break-all">{s.helper}</p>}
+                  <div className="flex flex-wrap gap-2 mt-3" onClick={(event) => event.stopPropagation()}>
+                    <Button type="button" size="sm" variant="outline" className="h-8 gap-1" onClick={() => openStepPicker(s.id, "camera")}><Camera className="h-3.5 w-3.5" /> Câmera</Button>
+                    <Button type="button" size="sm" variant="outline" className="h-8 gap-1" onClick={() => openStepPicker(s.id, "gallery")}><FilePenLine className="h-3.5 w-3.5" /> Arquivo</Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -507,14 +635,34 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
             <div className="hidden">
               <input ref={(node) => { inputRefs.current.foto_antes = node; }} type="file" accept="image/*" capture="environment" onChange={(event) => void handleInputChange("foto_antes", event)} />
               <input ref={(node) => { inputRefs.current.foto_depois = node; }} type="file" accept="image/*" capture="environment" onChange={(event) => void handleInputChange("foto_depois", event)} />
+              <input ref={(node) => { galleryInputRefs.current.foto_antes = node; }} type="file" accept="image/*" onChange={(event) => void handleInputChange("foto_antes", event)} />
+              <input ref={(node) => { galleryInputRefs.current.foto_depois = node; }} type="file" accept="image/*" onChange={(event) => void handleInputChange("foto_depois", event)} />
+              <input ref={extraInputRef} type="file" accept="image/*" multiple onChange={(event) => void handleExtraInputChange(event)} />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-gold/40 bg-gold/5 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold">Mais fotos para o laudo</p>
+                <p className="text-xs text-muted-foreground">Escolha várias imagens já salvas no celular ou computador.</p>
+              </div>
+              <Button type="button" variant="outline" className="gap-2" onClick={() => extraInputRef.current?.click()}><FilePenLine className="h-4 w-4" /> Escolher arquivos</Button>
             </div>
 
             {error && <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">{error}</p>}
 
             <div className="flex flex-wrap gap-2">
               <Button
+                type="button"
+                variant="outline"
+                disabled={saving || savingDraft || busy}
+                onClick={() => void handleSalvarRascunho()}
+                className="gap-2 border-gold/40"
+              >
+                {savingDraft ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar rascunho
+              </Button>
+              <Button
                 onClick={handleFinalizar}
-                disabled={!allDone || saving || busy}
+                disabled={!allDone || saving || savingDraft || busy}
                 className={`gap-2 ${allDone ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "opacity-50 cursor-not-allowed bg-muted"}`}
               >
                 {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Finalizando…</> : <><Flame className="h-4 w-4" /> Finalizar destruição</>}
@@ -599,15 +747,10 @@ function ObjetosPage() {
     void navigate({
       to: "/objetos",
       replace: true,
-      search: (prev) => {
-        const mergedStatus = nextSearch.status ?? prev.status ?? "todos";
-        const mergedQuery = nextSearch.q ?? prev.q ?? "";
-        const mergedOpenNew = nextSearch.openNew ?? prev.openNew ?? false;
-        return {
-          status: mergedStatus === "todos" ? undefined : mergedStatus,
-          q: mergedQuery || undefined,
-          openNew: mergedOpenNew || undefined,
-        };
+      search: {
+        status: nextSearch.status ?? filter,
+        q: nextSearch.q ?? query,
+        openNew: nextSearch.openNew ?? showForm,
       },
     });
   };
@@ -640,11 +783,11 @@ function ObjetosPage() {
         .upload(storagePath, prepared.blob, { upsert: true, contentType: prepared.contentType });
       if (uploadError) throw uploadError;
 
-      const { data: publicData } = supabase.storage.from('fotos-veiculos').getPublicUrl(storagePath);
+      const signedUrl = await getSignedPhotoUrl(storagePath);
       const { error: insertError } = await supabase.from('fotos').insert({
         objeto_id: photoTarget.id,
         storage_path: storagePath,
-        url: publicData.publicUrl,
+        url: signedUrl,
         tipo: 'chegada',
         label: file.name,
       });
@@ -809,7 +952,12 @@ function ObjetosPage() {
               </thead>
               <tbody>
                 {filtered.map((o) => (
-                  <tr key={o.id} className="border-t border-border hover:bg-muted/20 transition-colors">
+                  <tr
+                    key={o.id}
+                    className="border-t border-border hover:bg-muted/20 transition-colors cursor-pointer"
+                    onClick={() => navigate({ to: "/objetos/$id", params: { id: o.id }, search: { status: "todos", q: "", openNew: false } })}
+                    title="Clique para abrir o cadastro completo do objeto"
+                  >
                     <td className="px-5 py-3">
                       <p className="font-medium">{o.descricao}</p>
                       {o.marca_modelo && <p className="text-xs text-muted-foreground">{o.marca_modelo}</p>}
@@ -822,9 +970,9 @@ function ObjetosPage() {
                     <td className="px-5 py-3">
                       <StatusBadge status={o.status as any} />
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-3" onClick={(event) => event.stopPropagation()}>
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-gold" title="Ver detalhes" onClick={() => navigate({ to: "/objetos/$id", params: { id: o.id } })}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-gold" title="Ver detalhes" onClick={() => navigate({ to: "/objetos/$id", params: { id: o.id }, search: { status: "todos", q: "", openNew: false } })}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         <DropdownMenu>
@@ -840,7 +988,7 @@ function ObjetosPage() {
                             <DropdownMenuItem onClick={() => startPhotoUpload(o, 'gallery')}>
                               <ImagePlus className="h-4 w-4" /> Escolher arquivo / galeria
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate({ to: "/objetos/$id", params: { id: o.id } })}>
+                            <DropdownMenuItem onClick={() => navigate({ to: "/objetos/$id", params: { id: o.id }, search: { status: "todos", q: "", openNew: false } })}>
                               <Upload className="h-4 w-4" /> Abrir ficha do objeto
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -859,7 +1007,7 @@ function ObjetosPage() {
                               <Flame className="h-4 w-4" /> Registrar destruição / laudo
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => navigate({ to: "/objetos/$id", params: { id: o.id } })}>
+                            <DropdownMenuItem onClick={() => navigate({ to: "/objetos/$id", params: { id: o.id }, search: { status: "todos", q: "", openNew: false } })}>
                               <Eye className="h-4 w-4" /> Ver detalhes completos
                             </DropdownMenuItem>
                           </DropdownMenuContent>

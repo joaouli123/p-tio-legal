@@ -308,6 +308,18 @@ const VEHICLE_LIST_COLUMNS = [
   'observacoes', 'registrado_por', 'created_at', 'updated_at',
 ].join(', ');
 
+const OBJECT_LIST_COLUMNS = [
+  'id', 'tipo', 'descricao', 'marca_modelo', 'numero_serie', 'quantidade',
+  'unidade', 'origem', 'situacao', 'status', 'delegacia_nome', 'processo',
+  'setor', 'local_vaga', 'observacoes', 'registrado_por', 'created_at', 'updated_at',
+].join(', ');
+
+const DESTRUCTION_COLUMNS = 'id, veiculo_id, objeto_id, metodo, operador_nome, finalizado, finalizado_em, created_at, updated_at';
+const LAUDO_COLUMNS = 'id, numero, veiculo_id, objeto_id, destruicao_id, responsavel_nome, emitido_em, hash_sha256, created_at';
+const HISTORY_COLUMNS = 'id, veiculo_id, objeto_id, tipo, titulo, detalhe, usuario_nome, created_at';
+const PROFILE_COLUMNS = 'id, nome, cargo, delegacia, escopo_tipo, escopo_valor, matricula, ativo, avatar_url, notificacoes_push_habilitadas, biometria_habilitada, created_at, updated_at';
+const SERVICO_COLUMNS = 'id, veiculo_id, tipo, descricao, data_inicio, data_fim, quantidade, valor_unitario, pago, observacoes, registrado_por, created_at, updated_at';
+
 /**
  * List vehicles in scope. Optional `pagination` ({ limit, offset }) is available
  * for large deployments; when omitted the full scoped list is returned (current
@@ -432,7 +444,7 @@ export async function getObjetos(status?: ObjetoStatus) {
 
   let query = supabase
     .from('objetos')
-    .select('*')
+    .select(OBJECT_LIST_COLUMNS)
     .order('created_at', { ascending: false });
   if (status) query = query.eq('status', status);
   if (allowedDelegacias) query = query.in('delegacia_nome', allowedDelegacias);
@@ -504,8 +516,8 @@ export async function getDestruicoesObjeto() {
   if (allowedDelegacias && allowedDelegacias.length === 0) return [];
 
   const joinSelect = allowedDelegacias
-    ? '*, objetos!inner(descricao, marca_modelo, delegacia_nome)'
-    : '*, objetos(descricao, marca_modelo, delegacia_nome)';
+    ? `${DESTRUCTION_COLUMNS}, objetos!inner(descricao, marca_modelo, delegacia_nome)`
+    : `${DESTRUCTION_COLUMNS}, objetos(descricao, marca_modelo, delegacia_nome)`;
 
   let query = supabase
     .from('destruicoes')
@@ -538,8 +550,8 @@ export async function getLaudosObjeto() {
   if (allowedDelegacias && allowedDelegacias.length === 0) return [];
 
   const joinSelect = allowedDelegacias
-    ? '*, objetos!inner(descricao, marca_modelo, delegacia_nome)'
-    : '*, objetos(descricao, marca_modelo, delegacia_nome)';
+    ? `${LAUDO_COLUMNS}, objetos!inner(descricao, marca_modelo, delegacia_nome)`
+    : `${LAUDO_COLUMNS}, objetos(descricao, marca_modelo, delegacia_nome)`;
 
   let query = supabase
     .from('laudos')
@@ -573,7 +585,7 @@ export async function getHistoricoObjeto(objetoId: string) {
 
   const { data, error } = await supabase
     .from('historico')
-    .select('*')
+    .select(HISTORY_COLUMNS)
     .eq('objeto_id', objetoId)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -604,8 +616,8 @@ export async function getDestruicoes() {
   // inner join on veiculos filtered by the allowed delegacias so the database
   // only returns the rows in scope (admin => no filter => outer-friendly join).
   const joinSelect = allowedDelegacias
-    ? '*, veiculos!inner(placa, marca_modelo, delegacia_nome)'
-    : '*, veiculos(placa, marca_modelo, delegacia_nome)';
+    ? `${DESTRUCTION_COLUMNS}, veiculos!inner(placa, marca_modelo, delegacia_nome)`
+    : `${DESTRUCTION_COLUMNS}, veiculos(placa, marca_modelo, delegacia_nome)`;
 
   let query = supabase
     .from('destruicoes')
@@ -639,18 +651,22 @@ export async function getLaudos() {
   if (allowedDelegacias && allowedDelegacias.length === 0) return [];
 
   const joinSelect = allowedDelegacias
-    ? '*, veiculos!inner(placa, marca_modelo, delegacia_nome)'
-    : '*, veiculos(placa, marca_modelo, delegacia_nome)';
+    ? `${LAUDO_COLUMNS}, veiculos!inner(placa, marca_modelo, delegacia_nome)`
+    : `${LAUDO_COLUMNS}, veiculos(placa, marca_modelo, delegacia_nome)`;
 
   let query = supabase
     .from('laudos')
     .select(joinSelect)
+    .not('veiculo_id', 'is', null)
     .order('emitido_em', { ascending: false });
   if (allowedDelegacias) query = query.in('veiculos.delegacia_nome', allowedDelegacias);
 
-  const { data, error } = await query;
+  const [{ data, error }, objetos] = await Promise.all([query, getLaudosObjeto()]);
   if (error) throw error;
-  return data ?? [];
+
+  return [...(data ?? []), ...objetos].sort(
+    (a, b) => new Date(b.emitido_em).getTime() - new Date(a.emitido_em).getTime(),
+  );
 }
 
 export async function createLaudo(laudo: Omit<Laudo, 'id' | 'created_at' | 'veiculo_id'> & { veiculo_id: string }) {
@@ -672,7 +688,7 @@ export async function getHistorico(veiculoId: string) {
 
   const { data, error } = await supabase
     .from('historico')
-    .select('*')
+    .select(HISTORY_COLUMNS)
     .eq('veiculo_id', veiculoId)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -701,7 +717,7 @@ export async function getProfiles() {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PROFILE_COLUMNS)
     .order('nome');
   if (error) throw error;
   return data as Profile[];
@@ -712,7 +728,7 @@ export async function getCurrentProfile() {
   if (!user) return null;
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PROFILE_COLUMNS)
     .eq('id', user.id)
     .single();
   if (error) return null;
@@ -787,7 +803,7 @@ export interface ChecklistRecepcao {
 export async function getChecklist(veiculoId: string): Promise<ChecklistRecepcao | null> {
   const { data, error } = await supabase
     .from('checklist_recepcao')
-    .select('*')
+    .select('id, veiculo_id, documentos_presentes, chaves_presentes, placa_identificavel, chassi_identificavel, vidros_intactos, pneus_presentes, motor_presente, bateria_presente, macaco_chave_roda, triangulo_presente, extintor_presente, observacoes, registrado_por, created_at, updated_at')
     .eq('veiculo_id', veiculoId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -867,7 +883,7 @@ const SERVICO_TIPO_LABELS: Record<ServicoTipo, string> = {
 export async function getServicos(veiculoId: string): Promise<Servico[]> {
   const { data, error } = await supabase
     .from('servicos')
-    .select('*')
+    .select(SERVICO_COLUMNS)
     .eq('veiculo_id', veiculoId)
     .order('data_inicio', { ascending: false });
   if (error) throw error;
@@ -881,8 +897,8 @@ export async function getAllServicos(): Promise<(Servico & { veiculos?: { placa:
   if (allowedDelegacias && allowedDelegacias.length === 0) return [];
 
   const joinSelect = allowedDelegacias
-    ? '*, veiculos!inner(placa, marca_modelo, delegacia_nome)'
-    : '*, veiculos(placa, marca_modelo, delegacia_nome)';
+    ? 'id, veiculo_id, tipo, descricao, data_inicio, data_fim, quantidade, valor_unitario, pago, observacoes, registrado_por, created_at, updated_at, veiculos!inner(placa, marca_modelo, delegacia_nome)'
+    : 'id, veiculo_id, tipo, descricao, data_inicio, data_fim, quantidade, valor_unitario, pago, observacoes, registrado_por, created_at, updated_at, veiculos(placa, marca_modelo, delegacia_nome)';
 
   let query = supabase
     .from('servicos')
@@ -896,6 +912,24 @@ export async function getAllServicos(): Promise<(Servico & { veiculos?: { placa:
 }
 
 export async function getServicoStats(): Promise<ServicoStats> {
+  const { data: aggregated, error: aggregateError } = await supabase.rpc('get_servico_stats');
+  if (!aggregateError && aggregated && typeof aggregated === 'object') {
+    const value = aggregated as Record<string, unknown>;
+    return {
+      totalServicos: Number(value.totalServicos ?? 0),
+      totalCobrado: Number(value.totalCobrado ?? 0),
+      totalPago: Number(value.totalPago ?? 0),
+      totalPendente: Number(value.totalPendente ?? 0),
+      servicosPagos: Number(value.servicosPagos ?? 0),
+      servicosPendentes: Number(value.servicosPendentes ?? 0),
+      veiculosComCobranca: Number(value.veiculosComCobranca ?? 0),
+      ticketMedio: Number(value.ticketMedio ?? 0),
+      adimplenciaPercent: Number(value.adimplenciaPercent ?? 0),
+      tipos: Array.isArray(value.tipos) ? value.tipos as ServicoTipoStats[] : [],
+    };
+  }
+
+  // Compatibilidade durante a janela em que a migration ainda não foi aplicada.
   const servicos = await getAllServicos();
   const byTipo = new Map<ServicoTipo, ServicoTipoStats>();
   const veiculosComCobranca = new Set<string>();

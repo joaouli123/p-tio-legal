@@ -17,6 +17,32 @@ type PlateLookupResult =
   | { kind: 'unavailable'; message: string }
   | { kind: 'error'; message: string };
 
+const LOOKUP_WINDOW_MS = 60_000;
+const LOOKUP_MAX_REQUESTS = 30;
+const lookupRateLimit = new Map<string, { count: number; resetAt: number }>();
+
+function allowLookupRequest(request: Request) {
+  const now = Date.now();
+  if (lookupRateLimit.size > 5_000) {
+    for (const [staleKey, staleEntry] of lookupRateLimit) {
+      if (staleEntry.resetAt <= now) lookupRateLimit.delete(staleKey);
+    }
+  }
+  const key = request.headers.get('cf-connecting-ip')
+    ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    ?? 'unknown-client';
+  const current = lookupRateLimit.get(key);
+
+  if (!current || current.resetAt <= now) {
+    lookupRateLimit.set(key, { count: 1, resetAt: now + LOOKUP_WINDOW_MS });
+    return true;
+  }
+
+  if (current.count >= LOOKUP_MAX_REQUESTS) return false;
+  current.count += 1;
+  return true;
+}
+
 function normalizePlate(value: string) {
   return value.replace(/[^A-Z0-9]/gi, '').toUpperCase();
 }
@@ -109,12 +135,20 @@ function toLookupPayload(payload: Record<string, unknown>): PlateLookupPayload |
 
 async function lookupWithApiPlacas(plate: string, token: string): Promise<PlateLookupResult> {
   // API Placas currently documents the WDAPI2 host for plate lookups.
-  const response = await fetch(`https://wdapi2.com.br/consulta/${plate}/${token}`, {
-    headers: {
-      'User-Agent': 'PatioLegal/1.0',
-      Accept: 'application/json,text/plain,*/*',
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
+  let response: Response;
+  try {
+    response = await fetch(`https://wdapi2.com.br/consulta/${plate}/${token}`, {
+      headers: {
+        'User-Agent': 'PatioLegal/1.0',
+        Accept: 'application/json,text/plain,*/*',
+      },
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const rawBody = await response.text();
   const payload = response.headers.get('content-type')?.includes('application/json')
@@ -211,6 +245,13 @@ export const Route = createFileRoute('/api/plate-lookup')({
           return Response.json(
             { status: 'error', message: 'Sessão inválida ou expirada. Faça login novamente.' },
             { status: 401 },
+          );
+        }
+
+        if (!allowLookupRequest(request)) {
+          return Response.json(
+            { status: 'error', message: 'Limite de consultas temporariamente atingido. Tente novamente em instantes.' },
+            { status: 429, headers: { 'Retry-After': '60' } },
           );
         }
 

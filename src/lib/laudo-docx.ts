@@ -14,6 +14,7 @@ import {
 } from "docx";
 
 import logoMaringaSat from "@/assets/logo-maringa-sat.jpg";
+import signatureImage from "@/assets/assianturaa.jpeg";
 
 interface LaudoFoto {
   url: string;
@@ -64,12 +65,12 @@ async function fetchImageBytes(url?: string) {
   }
 }
 
-function textParagraph(text: string, options?: ConstructorParameters<typeof Paragraph>[0]) {
+function textParagraph(text: string, options?: any) {
   return new Paragraph({
     children: [new TextRun({ text, size: 22 })],
     spacing: { after: 110 },
     alignment: AlignmentType.JUSTIFIED,
-    ...options,
+    ...(options ?? {}),
   });
 }
 
@@ -132,12 +133,18 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
   const logoUrl = typeof window !== "undefined"
     ? new URL(logoMaringaSat as string, window.location.href).href
     : (logoMaringaSat as string);
+  const signatureUrl = typeof window !== "undefined"
+    ? new URL(signatureImage as string, window.location.href).href
+    : (signatureImage as string);
 
-  const [logoData, qrData, photoData] = await Promise.all([
+  const [logoData, qrData, photoData, signatureData] = await Promise.all([
     fetchImageBytes(logoUrl),
     fetchImageBytes(getField(doc, "qrCodeUrl", "")),
     Promise.all((doc.fotos ?? []).map((foto) => fetchImageBytes(foto.url))),
+    fetchImageBytes(signatureUrl),
   ]);
+  const photoDimensions = await Promise.all(photoData.map((image) => image ? getImageDimensions(image) : Promise.resolve(null)));
+  const signatureDimensions = signatureData ? await getImageDimensions(signatureData) : null;
 
   const children: Array<Paragraph | Table> = [];
 
@@ -145,7 +152,7 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
     children.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 160 },
-      children: [new ImageRun({ data: logoData, transformation: { width: 600, height: 98 } })],
+      children: [new ImageRun({ data: logoData, type: "jpg", transformation: { width: 600, height: 98 } })],
     }));
   }
 
@@ -166,7 +173,7 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
               borderlessCell([
                 new Paragraph({
                   alignment: AlignmentType.LEFT,
-                  children: [new ImageRun({ data: qrData, transformation: { width: 72, height: 72 } })],
+                  children: [new ImageRun({ data: qrData, type: "png", transformation: { width: 72, height: 72 } })],
                 }),
               ]),
               borderlessCell([
@@ -202,9 +209,10 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
               const image = photoData[index];
               const photoChildren: Paragraph[] = [];
               if (image) {
+                const dimensions = fitImageIntoBox(photoDimensions[index] ?? { width: 3, height: 2 }, 220, 150);
                 photoChildren.push(new Paragraph({
                   alignment: AlignmentType.CENTER,
-                  children: [new ImageRun({ data: image, transformation: { width: 220, height: 150 } })],
+                  children: [new ImageRun({ data: image, type: "jpg", transformation: dimensions })],
                 }));
               } else {
                 photoChildren.push(new Paragraph({
@@ -225,20 +233,30 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
     ];
   };
 
-  const buildSignatureBlock = (): Paragraph[] => [
-    new Paragraph({
-      spacing: { before: 220, after: 520 },
-      children: [new TextRun({ text: `Maringá/PR, ${getField(doc, "destructionDateLong")}.`, size: 24 })],
-    }),
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      border: { top: { color: "000000", style: BorderStyle.SINGLE, size: 4 } },
-      children: [
-        new TextRun({ text: "Jardel F. Pinto", bold: true, size: 24 }),
-        new TextRun({ text: "Representante Técnico Nomeado", break: 1, size: 24 }),
-      ],
-    }),
-  ];
+  const buildSignatureBlock = (): Paragraph[] => {
+    const signatureParagraph = signatureData && signatureDimensions
+      ? new Paragraph({
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 120, after: 120 },
+          children: [new ImageRun({ data: signatureData, type: "jpg", transformation: fitImageIntoBox(signatureDimensions, 520, 260) })],
+        })
+      : new Paragraph({
+          alignment: AlignmentType.CENTER,
+          border: { top: { color: "000000", style: BorderStyle.SINGLE, size: 4 } },
+          children: [
+            new TextRun({ text: "Jardel F. Pinto", bold: true, size: 24 }),
+            new TextRun({ text: "Representante Técnico Nomeado", break: 1, size: 24 }),
+          ],
+        });
+
+    return [
+      new Paragraph({
+        spacing: { before: 220, after: 180 },
+        children: [new TextRun({ text: `Maringá/PR, ${getField(doc, "destructionDateLong")}.`, size: 24 })],
+      }),
+      signatureParagraph,
+    ];
+  };
 
   if (doc.laudoNarrativo) {
     const qtdFem = getField(doc, "qtdFem");
@@ -349,7 +367,7 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
             borderlessCell([
               new Paragraph({
                 alignment: AlignmentType.LEFT,
-                children: [new ImageRun({ data: qrData, transformation: { width: 72, height: 72 } })],
+                children: [new ImageRun({ data: qrData, type: "png", transformation: { width: 72, height: 72 } })],
               }),
             ]),
             borderlessCell([
@@ -388,9 +406,10 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
             const photoChildren: Paragraph[] = [];
 
             if (image) {
+              const dimensions = fitImageIntoBox(photoDimensions[index] ?? { width: 3, height: 2 }, 220, 150);
               photoChildren.push(new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new ImageRun({ data: image, transformation: { width: 220, height: 150 } })],
+                children: [new ImageRun({ data: image, type: "jpg", transformation: dimensions })],
               }));
             } else {
               photoChildren.push(new Paragraph({
@@ -412,19 +431,7 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
     }));
   }
 
-  children.push(new Paragraph({
-    spacing: { before: 220, after: 520 },
-    children: [new TextRun({ text: `Maringá/PR, ${getField(doc, "destructionDateLong")}.`, size: 24 })],
-  }));
-
-  children.push(new Paragraph({
-    alignment: AlignmentType.CENTER,
-    border: { top: { color: "000000", style: BorderStyle.SINGLE, size: 4 } },
-    children: [
-      new TextRun({ text: "Jardel F. Pinto", bold: true, size: 24 }),
-      new TextRun({ text: "Representante Técnico Nomeado", break: 1, size: 24 }),
-    ],
-  }));
+  children.push(...buildSignatureBlock());
 
   const document = new Document({
     sections: [
@@ -440,4 +447,22 @@ export async function createLaudoDocxBlob(doc: LaudoDocData) {
   });
 
   return Packer.toBlob(document);
+}
+
+type ImageDimensions = { width: number; height: number };
+
+async function getImageDimensions(data: ArrayBuffer): Promise<ImageDimensions> {
+  try {
+    const bitmap = await createImageBitmap(new Blob([data]));
+    const dimensions = { width: bitmap.width, height: bitmap.height };
+    bitmap.close();
+    return dimensions;
+  } catch {
+    return { width: 3, height: 2 };
+  }
+}
+
+function fitImageIntoBox(dimensions: ImageDimensions, boxWidth: number, boxHeight: number) {
+  const scale = Math.min(boxWidth / dimensions.width, boxHeight / dimensions.height);
+  return { width: Math.max(1, Math.round(dimensions.width * scale)), height: Math.max(1, Math.round(dimensions.height * scale)) };
 }

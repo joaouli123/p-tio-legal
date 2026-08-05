@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -205,6 +205,7 @@ const EMPTY_FORM = {
 };
 
 function CobrancasPage() {
+  const navigate = useNavigate();
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -253,7 +254,7 @@ function CobrancasPage() {
 
   const diasNoPatio = selected ? calcDiasNoPatio(selected.created_at) : 0;
   const patioOptions = useMemo(() => {
-    const options = [...PATIO_OPTIONS];
+    const options: Array<{ value: string; label: string }> = [...PATIO_OPTIONS];
 
     if (selected?.local_vaga && !options.some((option) => option.label === selected.local_vaga)) {
       options.unshift({ value: "LOCAL_ATUAL", label: selected.local_vaga });
@@ -672,16 +673,38 @@ function CobrancasPage() {
               </div>
 
               {/* Vehicle info + add button */}
-              <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+              <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-bold">{selected.placa} — {selected.marca_modelo}</p>
+                  <button type="button" className="font-bold text-left hover:text-gold transition-colors" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: selected.id }, search: { status: "todos", q: "", openNew: false } })}>
+                    {selected.placa} — {selected.marca_modelo}
+                  </button>
                   <p className="text-sm text-muted-foreground">
                     Entrada: {fmt(selected.created_at)} · <strong>{diasNoPatio} dias</strong> no pátio
                   </p>
                 </div>
-                <Button onClick={openAdd} className="gap-2">
-                  <Plus className="h-4 w-4" /> Adicionar cobrança
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: selected.id }, search: { status: "todos", q: "", openNew: false } })}>Ver cadastro completo</Button>
+                  <Button onClick={openAdd} className="gap-2"><Plus className="h-4 w-4" /> Adicionar cobrança</Button>
+                </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 border-t border-border pt-4 text-sm">
+                  {[
+                    ["Placa oficial", selected.placa_oficial ?? selected.placa],
+                    ["Chassi", selected.chassi ?? "—"],
+                    ["Tipo / situação", `${selected.tipo} · ${selected.situacao}`],
+                    ["Delegacia", selected.delegacia_nome ?? "—"],
+                    ["Processo / inquérito", selected.processo ?? "—"],
+                    ["Setor / vaga", [selected.setor, selected.local_vaga].filter(Boolean).join(" · ") || "—"],
+                    ["Cor / ano", [selected.cor, selected.ano].filter(Boolean).join(" · ") || "—"],
+                    ["Observações", selected.observacoes ?? "—"],
+                  ].map(([label, value]) => (
+                    <div key={label}>
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                      <p className="font-medium break-words">{value}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Services table */}

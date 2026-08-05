@@ -3,6 +3,11 @@
 // downscale to a max edge and re-encode as JPEG to keep uploads small.
 
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15 MB
+const SAFE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic']);
+
+function safeFilename(value: string) {
+  return value.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-120) || 'foto.jpg';
+}
 
 export class ImageTooLargeError extends Error {
   constructor(sizeBytes: number) {
@@ -30,9 +35,8 @@ export async function prepareImageForUpload(
     throw new ImageTooLargeError(file.size);
   }
 
-  // Only attempt canvas compression for raster images the browser can decode.
-  if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') {
-    return { blob: file, contentType: file.type || 'application/octet-stream', filename: file.name };
+  if (!SAFE_IMAGE_TYPES.has(file.type)) {
+    throw new Error('Envie apenas imagens JPEG, PNG, WebP ou HEIC.');
   }
 
   try {
@@ -47,7 +51,7 @@ export async function prepareImageForUpload(
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       bitmap.close();
-      return { blob: file, contentType: file.type, filename: file.name };
+      return { blob: file, contentType: file.type, filename: safeFilename(file.name) };
     }
     ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
     bitmap.close();
@@ -57,13 +61,13 @@ export async function prepareImageForUpload(
     });
 
     if (!blob) {
-      return { blob: file, contentType: file.type, filename: file.name };
+      return { blob: file, contentType: file.type, filename: safeFilename(file.name) };
     }
 
     // If compression didn't help (e.g. already tiny), keep the smaller of the two.
     const finalBlob = blob.size < file.size ? blob : file;
     const isJpeg = finalBlob === blob;
-    const filename = isJpeg ? file.name.replace(/\.[^.]+$/, '') + '.jpg' : file.name;
+    const filename = isJpeg ? safeFilename(file.name.replace(/\.[^.]+$/, '') + '.jpg') : safeFilename(file.name);
     return {
       blob: finalBlob,
       contentType: isJpeg ? 'image/jpeg' : (file.type || 'image/jpeg'),
@@ -71,6 +75,6 @@ export async function prepareImageForUpload(
     };
   } catch {
     // Decoding failed — fall back to the original (already size-checked) file.
-    return { blob: file, contentType: file.type || 'application/octet-stream', filename: file.name };
+    return { blob: file, contentType: file.type, filename: safeFilename(file.name) };
   }
 }
