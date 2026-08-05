@@ -16,7 +16,7 @@ ENV PORT=3000
 
 COPY package*.json ./
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends curl wget \
     && rm -rf /var/lib/apt/lists/* \
     && npm ci --omit=dev \
     && npm cache clean --force
