@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useChildMatches, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -59,7 +59,7 @@ function parseObjetoSearch(search: Record<string, unknown>) {
 
 export const Route = createFileRoute("/objetos")({
   validateSearch: parseObjetoSearch,
-  component: ObjetosPage,
+  component: ObjetosPageLayout,
   head: () => ({ meta: [{ title: "Objetos — Pátio Legal" }] }),
 });
 
@@ -711,6 +711,12 @@ function DestruicaoObjetoDialog({ objeto, open, onClose, onFinalized }: { objeto
       </DialogContent>
     </Dialog>
   );
+}
+
+function ObjetosPageLayout() {
+  // Rotas filhas (/$id) precisam de Outlet; sem isso o detalhe nunca renderiza.
+  const childMatches = useChildMatches();
+  return childMatches.length > 0 ? <Outlet /> : <ObjetosPage />;
 }
 
 function ObjetosPage() {

@@ -450,7 +450,7 @@ export async function getObjetos(status?: ObjetoStatus) {
   if (allowedDelegacias) query = query.in('delegacia_nome', allowedDelegacias);
   const { data, error } = await query;
   if (error) throw error;
-  return data as Objeto[];
+  return data as unknown as Objeto[];
 }
 
 export async function getObjeto(id: string) {
@@ -622,6 +622,7 @@ export async function getDestruicoes() {
   let query = supabase
     .from('destruicoes')
     .select(joinSelect)
+    .not('veiculo_id', 'is', null)
     .order('created_at', { ascending: false });
   if (allowedDelegacias) query = query.in('veiculos.delegacia_nome', allowedDelegacias);
 

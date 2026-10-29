@@ -63,6 +63,7 @@ function DestruicaoPage() {
   const selectedDestruction = destruicoes.find((item: any) => item.veiculo_id === selectedId);
   const selected = veiculos.find(v => v.id === selectedId) ?? selectedDestruction?.veiculos;
   const allDone = steps.foto_antes.done && steps.foto_depois.done;
+  const alreadyFinalized = Boolean(selectedDestruction?.finalizado);
 
   const laudoDocument = useMemo(() => {
     if (!selected) return null;
@@ -74,13 +75,13 @@ function DestruicaoPage() {
       veiculo: selected,
       laudoNumber: laudoNumber || `LD-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
       metodo,
-      destructionDate: new Date().toISOString(),
+      destructionDate: selectedDestruction?.finalizado_em ?? new Date().toISOString(),
       oficioNumber: oficioNumber || undefined,
       processoNumber: processoNumber || undefined,
       fotos,
       hash: laudoHash || undefined,
     });
-  }, [laudoNumber, metodo, oficioNumber, processoNumber, selected, steps.foto_antes.publicUrl, steps.foto_depois.publicUrl, laudoHash, reportPhotos]);
+  }, [laudoNumber, metodo, oficioNumber, processoNumber, selected, steps.foto_antes.publicUrl, steps.foto_depois.publicUrl, laudoHash, reportPhotos, selectedDestruction?.finalizado_em]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -536,7 +537,7 @@ function DestruicaoPage() {
               <Button
                 type="button"
                 variant="outline"
-                disabled={!selectedId || saving || savingDraft || docBusy}
+                disabled={!selectedId || alreadyFinalized || saving || savingDraft || docBusy}
                 onClick={() => void handleSalvarRascunho()}
                 className="gap-2 border-gold/40"
               >
@@ -544,7 +545,7 @@ function DestruicaoPage() {
               </Button>
               <Button
                 onClick={handleFinalizar}
-                disabled={!allDone || !selectedId || saving || savingDraft || docBusy}
+                disabled={!allDone || !selectedId || alreadyFinalized || saving || savingDraft || docBusy}
                 className={`gap-2 ${allDone && selectedId ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "opacity-50 cursor-not-allowed bg-muted"}`}
               >
                 {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Finalizando…</> : <><Flame className="h-4 w-4" /> Finalizar destruição</>}

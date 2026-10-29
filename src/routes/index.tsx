@@ -441,7 +441,7 @@ function Dashboard() {
                     </thead>
                     <tbody>
                       {recentVehicles.map((v) => (
-                        <tr key={v.id} className="border-t border-border hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: v.id } })}>
+                        <tr key={v.id} className="border-t border-border hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: v.id }, search: { status: "todos", q: "", openNew: false } })}>
                           <td className="px-5 py-3 font-mono font-semibold text-gold">{v.placa}</td>
                           <td className="px-5 py-3">{v.marca_modelo}</td>
                           <td className="px-5 py-3 text-muted-foreground">{v.ano ?? '—'}</td>
@@ -482,7 +482,7 @@ function Dashboard() {
                         <button
                           type="button"
                           className="flex w-full gap-3 group rounded-lg p-1 text-left hover:bg-muted/20 transition-colors"
-                          onClick={() => void navigate({ to: "/veiculos/$id", params: { id: a.vehicleId } })}
+                          onClick={() => void navigate({ to: "/veiculos/$id", params: { id: a.vehicleId }, search: { status: "todos", q: "", openNew: false } })}
                         >
                           <div className={`h-9 w-9 shrink-0 rounded-lg flex items-center justify-center border bg-${a.color}/10 border-${a.color}/30`}>
                             <Icon className={`h-4 w-4 text-${a.color}`} />

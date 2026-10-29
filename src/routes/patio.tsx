@@ -100,7 +100,7 @@ const setores: {
 const PATIO_EXPORT_HEADERS = ["Setor", "Vaga", "Placa", "Marca / Modelo", "Delegacia", "Processo", "Status"];
 const PATIO_GROUPED_EXPORT_HEADERS = ["Vaga", "Placa", "Marca / Modelo", "Delegacia", "Processo", "Status"];
 
-function normalizeText(value?: string) {
+function normalizeText(value?: string | null) {
   return (value ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -677,7 +677,7 @@ function PatioPage() {
                     <button
                       key={veiculo.id}
                       type="button"
-                      onClick={() => navigate({ to: "/veiculos/$id", params: { id: veiculo.id } })}
+                      onClick={() => navigate({ to: "/veiculos/$id", params: { id: veiculo.id }, search: { status: "todos", q: "", openNew: false } })}
                       className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-muted/20 transition-colors"
                     >
                       <div className="min-w-0 flex-1">
@@ -724,7 +724,7 @@ function PatioPage() {
                       <button
                         key={`${veiculo.id}-vaga`}
                         type="button"
-                        onClick={() => navigate({ to: "/veiculos/$id", params: { id: veiculo.id } })}
+                        onClick={() => navigate({ to: "/veiculos/$id", params: { id: veiculo.id }, search: { status: "todos", q: "", openNew: false } })}
                         className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-left hover:border-gold/40 hover:bg-gold/10 transition-colors"
                         title={`${veiculo.placa} • ${veiculo.marca_modelo}`}
                       >

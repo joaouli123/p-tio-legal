@@ -28,7 +28,16 @@ function LoginPage() {
     setError("");
     setInfo("");
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error && data.user) {
+      const { data: perfil } = await supabase.from("profiles").select("ativo").eq("id", data.user.id).maybeSingle();
+      if (perfil && perfil.ativo === false) {
+        await supabase.auth.signOut();
+        setLoading(false);
+        setError("Usuário inativo. Procure o administrador do sistema.");
+        return;
+      }
+    }
     setLoading(false);
     if (error) {
       setError(error.message);

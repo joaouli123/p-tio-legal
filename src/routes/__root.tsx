@@ -82,7 +82,11 @@ function RootComponent() {
   useEffect(() => {
     if (isAuthScreen) return;
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate({ to: "/login" });
+      if (!session) { navigate({ to: "/login" }); return; }
+      // Usuário desativado pelo admin não deve continuar usando uma sessão antiga.
+      void supabase.from("profiles").select("ativo").eq("id", session.user.id).maybeSingle().then(({ data }) => {
+        if (data && data.ativo === false) void supabase.auth.signOut();
+      });
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") navigate({ to: "/login" });

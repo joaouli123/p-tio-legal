@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, ShieldCheck, Loader2, UserRoundCheck } from "lucide-react";
 import { canAccessAdminArea, formatProfileAccessLabel, getCurrentProfile, getProfiles, getUserRoleLabel, normalizeUserRole, type AccessScopeType, type EffectiveUserRole, type Profile, type UserRole } from "@/lib/db";
-import { supabase } from "@/lib/supabase";
+import { supabase, createSignupClient } from "@/lib/supabase";
 
 export const Route = createFileRoute("/usuarios")({
   beforeLoad: async () => {
@@ -142,7 +142,7 @@ function NovoUsuarioDialog({ open, onClose, onSaved, delegacias }: { open: boole
       const escopoValor = cargo === "admin" ? null : scopeValue;
       const delegacia = escopoTipo === "delegacia" ? escopoValor : null;
 
-      const { data, error: err } = await supabase.auth.signUp({
+      const { data, error: err } = await createSignupClient().auth.signUp({
         email,
         password: senha,
         options: {

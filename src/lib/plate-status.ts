@@ -176,7 +176,7 @@ export function resolvePlateStatus(input: {
   tipo?: string | null;
   tipo_consulta?: string | null;
 }): PlateStatus {
-  const requested = isPlateStatus(input.status_placa ?? undefined) ? input.status_placa : undefined;
+  const requested: PlateStatus | undefined = isPlateStatus(input.status_placa ?? undefined) ? (input.status_placa as PlateStatus) : undefined;
 
   if (detectPlateDivergence(input)) {
     return requested === 'suspeita_adulteracao' ? requested : 'divergente';

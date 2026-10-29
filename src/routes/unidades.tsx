@@ -162,7 +162,7 @@ function UnidadesPage() {
 
   const load = () => {
     setLoading(true);
-    supabase.from("delegacias").select("*").order("nome")
+    Promise.resolve(supabase.from("delegacias").select("*").order("nome"))
       .then(({ data }) => { if (data) setDelegacias(data as Delegacia[]); })
       .catch(console.error)
       .finally(() => setLoading(false));

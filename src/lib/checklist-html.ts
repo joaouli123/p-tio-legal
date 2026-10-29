@@ -154,7 +154,7 @@ export function buildChecklistHtml(data: ChecklistPdfData): string {
   const dataSaida = isSaida ? formatDt(veiculo.updated_at) : "___/___/________";
 
   const checklistRows = CHECKLIST_ITEMS.map((item) => ({
-    label: item.pdfLabel ?? item.label,
+    label: item.pdfLabel,
     ok: data[item.key],
   }));
   const completedCount = checklistRows.filter((row) => row.ok).length;

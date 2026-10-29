@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useChildMatches, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { PlateStatusBadge } from "@/components/PlateStatusBadge";
@@ -43,7 +43,7 @@ function parseVehicleSearch(search: Record<string, unknown>) {
 
 export const Route = createFileRoute("/veiculos")({
   validateSearch: parseVehicleSearch,
-  component: VeiculosPage,
+  component: VeiculosPageLayout,
   head: () => ({ meta: [{ title: "Veículos — Pátio Legal" }] }),
 });
 
@@ -473,6 +473,12 @@ function NovoVeiculoDialog({ open, onClose, onSaved }: { open: boolean; onClose:
   );
 }
 
+function VeiculosPageLayout() {
+  // Rotas filhas (/$id) precisam de Outlet; sem isso o detalhe nunca renderiza.
+  const childMatches = useChildMatches();
+  return childMatches.length > 0 ? <Outlet /> : <VeiculosPage />;
+}
+
 function VeiculosPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -747,7 +753,7 @@ function VeiculosPage() {
                           className="font-mono font-bold text-gold underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 rounded-sm"
                           onClick={(event) => {
                             event.stopPropagation();
-                            void navigate({ to: "/veiculos/$id", params: { id: v.id } });
+                            void navigate({ to: "/veiculos/$id", params: { id: v.id }, search: { status: "todos", q: "", openNew: false } });
                           }}
                           aria-label={`Abrir ficha do veículo ${v.placa}`}
                         >

@@ -23,7 +23,7 @@ function ProcessosPage() {
 
   const openProcessVehicles = (processo: string, vinculados: Veiculo[]) => {
     if (vinculados.length === 1) {
-      void navigate({ to: "/veiculos/$id", params: { id: vinculados[0].id } });
+      void navigate({ to: "/veiculos/$id", params: { id: vinculados[0].id }, search: { status: "todos", q: "", openNew: false } });
       return;
     }
 
@@ -170,11 +170,11 @@ function ProcessosPage() {
                 <p>{new Date(selected.created_at).toLocaleString('pt-BR')}</p>
               </div>
               <div className="flex flex-wrap gap-2 pt-2">
-                <Button variant="outline" className="gap-2 border-border" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: selected.id } })}>
+                <Button variant="outline" className="gap-2 border-border" onClick={() => void navigate({ to: "/veiculos/$id", params: { id: selected.id }, search: { status: "todos", q: "", openNew: false } })}>
                   <Eye className="h-4 w-4" /> Abrir cadastro
                 </Button>
                 {selected.processo && (
-                  <Button className="gap-2 bg-gradient-gold text-primary-foreground hover:opacity-90 shadow-gold" onClick={() => openProcessVehicles(selected.processo, byProcesso[selected.processo] ?? [selected])}>
+                  <Button className="gap-2 bg-gradient-gold text-primary-foreground hover:opacity-90 shadow-gold" onClick={() => openProcessVehicles(selected.processo!, byProcesso[selected.processo!] ?? [selected])}>
                     <FileText className="h-4 w-4" /> Ver todos do processo
                   </Button>
                 )}

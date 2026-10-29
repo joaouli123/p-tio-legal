@@ -33,11 +33,11 @@ function AuditoriaPage() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    supabase
+    Promise.resolve(supabase
       .from("historico")
       .select("*, veiculos(placa)")
       .order("created_at", { ascending: false })
-      .limit(100)
+      .limit(100))
       .then(({ data, error }) => {
         if (!error && data) setLogs(data);
       })
