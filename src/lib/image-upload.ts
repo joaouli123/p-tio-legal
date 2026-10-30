@@ -29,7 +29,7 @@ interface CompressOptions {
  */
 export async function prepareImageForUpload(
   file: File,
-  { maxEdge = 1920, quality = 0.82 }: CompressOptions = {},
+  { maxEdge = 1600, quality = 0.72 }: CompressOptions = {},
 ): Promise<{ blob: Blob; contentType: string; filename: string }> {
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new ImageTooLargeError(file.size);
